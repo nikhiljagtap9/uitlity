@@ -1,0 +1,159 @@
+@extends('layout.app')
+
+@section('head')
+    <style>
+                    /* Pop-up alert styles */
+                    .alert-box {
+                        display: none;
+                        position: fixed;
+                        top: 80px; /* Adjust this value to position it below your navbar */
+                        left: 50%;
+                        transform: translateX(-50%); /* Center horizontally */
+                        width: 600px; /* Set fixed width */
+                        background-color: #fff;
+                        box-shadow: rgba(0, 0, 0, 0.3) 0px 3px 7px;
+                        border-radius: 10px;
+                        z-index: 1000;
+                        font-family: Arial, sans-serif;
+                    }
+
+                    .alert-header {
+                        background-color: red;
+                        color: white;
+                        padding: 10px;
+                        border-top-left-radius: 10px;
+                        border-top-right-radius: 10px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+
+                    .alert-title {
+                        font-size: 18px;
+                        background-color: red;
+                    }
+
+                    .close-btn {
+                        cursor: pointer;
+                        font-size: 25px;
+                        font-weight: bold;
+                    }
+
+                    .alert-body {
+                        padding: 20px;
+                        text-align: left;
+                        max-height: 300px; /* Set a maximum height */
+                        overflow-y: auto;
+                    }
+    </style>
+
+
+
+            @section('content')
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">Convert Excel File to CSV File</h3>
+                    </div>
+
+                    <div class="card-body">
+                        <form action="{{ route('upload_excel') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                            @csrf
+                            <div class="form-group">
+                                <label for="upload">Upload Excel File</label>
+                                <input type="file" name="upload" id="upload" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" name="upload" class="btn btn-primary" value="Upload">
+                            </div>
+                        </form>
+
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul>
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div class="row">
+                            <div class="col text-right">
+                                <a href="{{ route('download.sample') }}" class="btn btn-primary">Download Sample File</a>
+                            </div>
+                        </div>
+
+                        @if(session('showDownloadButton'))
+                            <button onclick="window.location.href='{{ route('downloadErrorFile') }}'" class="btn btn-primary">Download Error File</button>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Pop-up Alert Box -->
+                <div id="alertBox" class="alert-box">
+                    <div class="alert-header">
+                        <span class="alert-title">Error Occured in File</span>
+                        <span class="close-btn" onclick="closeAlert()">×</span>
+                    </div>
+                    <div class="alert-body">
+                        <p id="alertMessage">This is a professional alert message.</p>
+                    </div>
+                </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var errorMessage = {!! json_encode(session('error')) !!};
+                        var successMessage = {!! json_encode(session('success')) !!};
+
+                        if (errorMessage) {
+                            showAlert(errorMessage.replace(/\\n/g, '\n'));
+                        }
+
+                        if (successMessage) {
+                            showAlert(successMessage);
+                        }
+                    });
+
+                    // Show the alert pop-up
+                    function showAlert(message) {
+                        document.getElementById('alertMessage').innerHTML = message;
+                        document.getElementById('alertBox').style.display = 'block';
+                    }
+
+                    // Close the alert pop-up
+                    function closeAlert() {
+                        document.getElementById('alertBox').style.display = 'none';
+                    }
+                </script>
+            @endsection
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var errorMessage = {!! json_encode(session('error')) !!};
+            var successMessage = {!! json_encode(session('success')) !!};
+
+            if (errorMessage) {
+                showAlert(errorMessage.replace(/\\n/g, '\n'));
+            }
+
+            if (successMessage) {
+                showAlert(successMessage);
+            }
+        });
+
+        // Show the alert pop-up
+        function showAlert(message) {
+            document.getElementById('alertMessage').innerText = message;
+            document.getElementById('alertBox').style.display = 'block';
+        }
+
+        // Close the alert pop-up
+        function closeAlert() {
+            document.getElementById('alertBox').style.display = 'none';
+        }
+    </script>
+@endsection
+

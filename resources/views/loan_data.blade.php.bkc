@@ -1,0 +1,439 @@
+@extends('layout.app')
+@section('head')
+    <script src="{{ url('chart.js/dist/chart.umd.js') }}"></script>
+
+    <style>
+        .card-header {
+            padding: 2px 0 !important;
+        }
+
+        .card {
+            box-shadow: 0px 3px 4px 0px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        .card-body {
+            padding: 1rem 0;
+        }
+
+        .card-title {
+            margin-bottom: 10px;
+            float: none;
+        }
+    </style>
+@endsection
+
+@php
+function formatIndianCurrency($amount) {
+    $amount = floatval($amount);
+    $formattedAmount = number_format($amount, 2, '.', '');
+
+    // Split the formatted amount into integer and decimal parts
+    list($integerPart, $decimalPart) = explode('.', $formattedAmount);
+
+    $len = strlen($integerPart);    // Format the integer part for Indian currency
+    $formattedIntegerPart = '';
+
+    if ($len > 3) {
+        $formattedIntegerPart = substr($integerPart, -3); // Get the last 3 digits
+        $remainingDigits = substr($integerPart, 0, $len - 3); // Get the remaining digits
+
+        // Place commas after every two digits in the remaining digits
+        $formattedIntegerPart = preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', $remainingDigits) . ',' . $formattedIntegerPart;
+    } else {
+        $formattedIntegerPart = $integerPart;
+    }
+    // Combine integer part and decimal part
+    $formattedAmount = $formattedIntegerPart . '.' . $decimalPart;
+    return '₹' . $formattedAmount;
+}
+
+function indianFormat($ct) {
+    $ct = intval($ct);
+    $formattedNumber = '';
+
+    $len = strlen($ct);
+    if ($len > 3) {
+        $formattedNumber = substr($ct, -3);
+        $remainingDigits = substr($ct, 0, $len - 3);
+
+        $formattedNumber = preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', $remainingDigits) . ',' . $formattedNumber;
+    } else {
+        $formattedNumber = $ct;
+    }
+
+    return $formattedNumber;
+}
+
+
+@endphp
+
+
+@section('content')
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Muthoot MSME Active Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-text">
+                        Total Active Accounts: {{ indianFormat($count['muthoot_active']['muthootMSME_total_active_acc']) }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>Muthoot MSME Total Bank Sanction Amount Active Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['muthoot_active']['muthootMSME_bank_sanction_amount_active'], 2) }}</h5>
+                    {{--<p class="card-text">Total Accounts: {{ indianFormat($count['muthoot_active']['muthootMSME_total_active_acc']) }}</p>
+                    </p>--}}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>Muthoot MSME Total NBFC Sanction Amount
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['muthoot_active']['muthootMSME_nbfc_sanction_amount_active'], 2) }}</h5>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Muthoot MSME Close Accounts
+                </div>
+                <div class="card-body"><br>
+                    <h5 class="card-text">
+                        Total close Accounts: {{ indianFormat($count['muthoot_closed']['muthootMSME_total_closed_acc']) }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Muthoot MSME Total Bank Sanction Amount Close Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['muthoot_closed']['muthootMSME_bank_sanction_amount_closed'], 2) }}</h5>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>Muthoot MSME Total NBFC Sanction Amount
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['muthoot_closed']['muthootMSME_nbfc_sanction_amount_closed'], 2) }}</h5>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Capri Active Accounts
+                </div>
+                <div class="card-body"><br>
+                    <h5 class="card-text">
+                        Total Active Accounts: {{ indianFormat($count['capri_active']['capri_total_active_acc']) }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>Capri Total Bank Sanction Amount Active Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_active']['capri_bank_sanction_amount_active'], 2) }}</h5>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>Capri Total NBFC Sanction Amount
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_active']['capri_nbfc_sanction_amount_active'], 2) }}</h5>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Capri Close Accounts
+                </div>
+                <div class="card-body"><br>
+                    <h5 class="card-text">
+                        Total close Accounts: {{ indianFormat($count['capri_closed']['capri_total_closed_acc']) }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Capri Total Bank Sanction Amount Close Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_bank_sanction_amount_closed'], 2) }}</h5>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>Capri Total NBFC Sanction Amount
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_nbfc_sanction_amount_closed'], 2) }}</h5>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Close Accounts
+                </div>
+                <div class="card-body"><br>
+                    <h5 class="card-text">
+                        Total close Accounts: {{ indianFormat($count['capri_closed']['capri_total_closed_acc']) }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Total Bank Sanction Amount Close Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_bank_sanction_amount_closed'], 2) }}</h5>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Total NBFC Sanction Amount
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_nbfc_sanction_amount_closed'], 2) }}</h5>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Close Accounts
+                </div>
+                <div class="card-body"><br>
+                    <h5 class="card-text">
+                        Total close Accounts: {{ indianFormat($count['capri_closed']['capri_total_closed_acc']) }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Total Bank Sanction Amount Close Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_bank_sanction_amount_closed'], 2) }}</h5>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Total NBFC Sanction Amount
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_nbfc_sanction_amount_closed'], 2) }}</h5>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Close Accounts
+                </div>
+                <div class="card-body"><br>
+                    <h5 class="card-text">
+                        Total close Accounts: {{ indianFormat($count['capri_closed']['capri_total_closed_acc']) }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Total Bank Sanction Amount Close Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_bank_sanction_amount_closed'], 2) }}</h5>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Total NBFC Sanction Amount
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_nbfc_sanction_amount_closed'], 2) }}</h5>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Close Accounts
+                </div>
+                <div class="card-body"><br>
+                    <h5 class="card-text">
+                        Total close Accounts: {{ indianFormat($count['capri_closed']['capri_total_closed_acc']) }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Total Bank Sanction Amount Close Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_bank_sanction_amount_closed'], 2) }}</h5>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Total NBFC Sanction Amount
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_nbfc_sanction_amount_closed'], 2) }}</h5>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Close Accounts
+                </div>
+                <div class="card-body"><br>
+                    <h5 class="card-text">
+                        Total close Accounts: {{ indianFormat($count['capri_closed']['capri_total_closed_acc']) }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i>  Total Bank Sanction Amount Close Accounts
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_bank_sanction_amount_closed'], 2) }}</h5>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fa fa-layer-group"></i> Total NBFC Sanction Amount
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ formatIndianCurrency($count['capri_closed']['capri_nbfc_sanction_amount_closed'], 2) }}</h5>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection

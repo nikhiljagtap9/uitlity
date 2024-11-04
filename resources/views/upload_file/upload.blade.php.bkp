@@ -1,0 +1,58 @@
+@extends('layout.app')
+
+@section('content')
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Convert Excel File to CSV File</h3>
+        </div>
+
+        <div class="card-body">
+            <form action="{{ route('upload_excel') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                @csrf
+                <div class="form-group">
+                    <label for="upload">Upload Excel File</label>
+                    <input type="file" name="upload" id="upload" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" name="upload" class="btn btn-primary" value="Upload">
+                </div>
+            </form>
+
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <div class="row">
+                <div class="col text-right">
+                    <a href="{{ route('download.sample') }}" class="btn btn-primary">Download Sample File</a>
+                </div>
+            </div>
+
+            @if(session('showDownloadButton'))
+                <button onclick="window.location.href='{{ route('downloadErrorFile') }}'" class="btn btn-primary">Download Error File</button>
+            @endif
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var errorMessage = {!! json_encode(session('error')) !!};
+            var successMessage = {!! json_encode(session('success')) !!};
+
+            if (errorMessage) {
+                alert(errorMessage.replace(/\\n/g, '\n'));
+            }
+
+            if (successMessage) {
+                alert(successMessage);
+            }
+        });
+    </script>
+@endsection
+
