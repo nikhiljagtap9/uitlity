@@ -42,6 +42,10 @@
                             <td>Loan Closure Date</td>
                             <td>{{ $closureDate->format('d M, Y') }}</td>
                         </tr>
+                        <tr>
+                            <td>Repayment Schedule</td>
+                            <td>{{ $loan_account->Repayment_Type }}</td>
+                        </tr>
                     </table>
                 </div>
                 <div class="col-3 col-sm-3 col-md-3">

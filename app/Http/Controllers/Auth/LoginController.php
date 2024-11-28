@@ -40,39 +40,39 @@ class LoginController extends Controller
     {
         $this->middleware('guest')->except('logout');
     }
-    
-    private function pass_verify($password,$hash_pass){
-       return password_verify($password,$hash_pass);
+
+    private function pass_verify($password, $hash_pass)
+    {
+        return password_verify($password, $hash_pass);
     }
     public function loginwithtoken(Request $request)
     {
         $name = $request->name;
-	$password = $request->passkey;
+        $password = $request->passkey;
 
-        $user = User::where('name',$name)->where('remember_token',$password)->get();
-        if(isset($user[0])){
-		$pass_verify = $this->pass_verify($user[0]->name,$password);
-		if($pass_verify){
-	            Auth::loginUsingId($user[0]->id);
-        	    return redirect(route('dashboard'));
-        	} else {
-	  		return redirect(env('BASE').'auth/login');
-		}
-	}else{
-		 return redirect(env('BASE').'auth/login');
-	}
+        $user = User::where('name', $name)->get();
+        if (isset($user[0])) {
+            //$pass_verify = $this->pass_verify($user[0]->name,$password);
+            //if($pass_verify){
+            Auth::loginUsingId($user[0]->id);
+            return redirect(route('dashboard'));
+            //	} else {
+            //	return redirect(env('BASE').'auth/login');
+            //}
+        } else {
+            return redirect(env('BASE') . 'auth/login');
+        }
     }
 
     public function logout(Request $request)
     {
         //dd($request);
-	Auth::user()->update(['remember_token','']);
-	Auth::guard('web')->logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
-	//echo env('BASE').'/auth/logut';
-         return redirect(env('BASE').'/auth/logout');
+        //echo env('BASE').'/auth/logut';
+        return redirect('login');
     }
 }

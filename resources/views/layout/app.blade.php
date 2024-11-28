@@ -8,13 +8,13 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>CAPRI Colending</title>
     <!-- Google Font: Montserrat -->
-    <link rel="stylesheet" href="{{ env('BASE').'/all-files/dist/css/montserrat-font-family.css' }}">
+    <link rel="stylesheet" href="{{ env('BASE') . '/all-files/dist/css/montserrat-font-family.css' }}">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="{{ env('BASE').'/all-files/plugins/fontawesome-free/css/all.min.css' }}">
+    <link rel="stylesheet" href="{{ env('BASE') . '/all-files/plugins/fontawesome-free/css/all.min.css' }}">
     <!-- Theme style -->
-    <link rel="stylesheet" href="{{ env('BASE').'/all-files/dist/css/adminlte.min.css' }}">
+    <link rel="stylesheet" href="{{ env('BASE') . '/all-files/dist/css/adminlte.min.css' }}">
     <!--default loantap css-->
-    <link rel="stylesheet" href="{{ env('BASE').'/all-files/all-css.css' }}">
+    <link rel="stylesheet" href="{{ env('BASE') . '/all-files/all-css.css' }}">
     @yield('head')
 </head>
 
@@ -204,15 +204,15 @@
 
 
             <!-- Main Sidebar Container -->
-            <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <aside class="main-sidebar sidebar-dark-primary elevation-4" style="background-color:#0484CC ">
 
                 <!-- Brand Logo -->
                 <div>
                     <a href="#" class="brand-link">
 
-                        <img src="{{ env('BASE').'/all-files/dist/img/AdminLTELogo.png' }}" alt="AdminLTE Logo"
-                            class="brand-image float-none">
-                        <span class="brand-text font-weight-light">Bank Of Maharashtra</span>
+                        <img src="https://capwisefin.com/wp-content/uploads/2022/12/Capwise-White-Logo.png"
+                            alt="AdminLTE Logo" class="brand-image float-none">
+
                     </a>
                 </div>
 
@@ -222,22 +222,22 @@
                     <!-- Sidebar Menu active-header-menu-->
                     <nav class="mt-2">
                         <ul class="nav  nav-sidebar flex-column" data-widget="treeview" role="menu"
-			    data-accordion="false">
+                            data-accordion="false">
 
-			@if(Auth::user()->user_role === 'admin')
-                             <li class="nav-item ">
-                                <a href="{{ route('nbfc_dashboard') }}" class="nav-link">
-                                    <div class="d-flex">
-                                        <div class="nav-text">
-                                            <i class="fa fa-list"></i>
-                                            <p>All NBFC Dashboard</p>
+                            @if (Auth::user()->user_role === 'admin')
+                                <li class="nav-item ">
+                                    <a href="{{ route('nbfc_dashboard') }}" class="nav-link">
+                                        <div class="d-flex">
+                                            <div class="nav-text">
+                                                <i class="fa fa-list"></i>
+                                                <p>All NBFC Dashboard</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                </a>
-                            </li>
-                         @endif
+                                    </a>
+                                </li>
+                            @endif
 
-          
+
                             <li class="nav-item ">
                                 <a href="{{ route('dashboard') }}" class="nav-link">
                                     <div class="d-flex">
@@ -268,7 +268,7 @@
                                     </div>
                                 </a>
                             </li>
-               <!--             <li class="nav-item">
+                            <!--             <li class="nav-item">
                                 <a href="{{ route('createcsv') }}" class="nav-link">
                                     <div class="d-flex">
                                         <div class="nav-text">
@@ -277,10 +277,10 @@
                                         </div>
                                     </div>
                                 </a>
-			    </li>
+   </li>
                  -->
 
-                             <li class="nav-item">
+                            <li class="nav-item">
                                 <a href="{{ route('createcsv') }}" class="nav-link">
                                     <div class="d-flex">
                                         <div class="nav-text">
@@ -290,7 +290,7 @@
                                     </div>
                                 </a>
                             </li>
-                            
+
 
                             <li class="nav-item ">
                                 <a href="{{ route('loan_account.index') }}" class="nav-link">
@@ -423,12 +423,12 @@
     <!-- /.content-wrapper -->
     </div>
     </div>
-    <script src="{{ env('BASE').'/all-files/plugins/jquery/jquery.min.js' }}"></script>
+    <script src="{{ env('BASE') . '/all-files/plugins/jquery/jquery.min.js' }}"></script>
     <!-- jQuery UI 1.11.4 -->
-    <script src="{{ env('BASE').'/all-files/plugins/jquery-ui/jquery-ui.min.js' }}"></script>
+    <script src="{{ env('BASE') . '/all-files/plugins/jquery-ui/jquery-ui.min.js' }}"></script>
     <!-- Bootstrap 4 -->
-    <script src="{{ env('BASE').'/all-files/plugins/bootstrap/js/bootstrap.bundle.min.js' }}"></script>
-    <script src="{{ env('BASE').'/all-files/dist/js/adminlte.js' }}"></script>
+    <script src="{{ env('BASE') . '/all-files/plugins/bootstrap/js/bootstrap.bundle.min.js' }}"></script>
+    <script src="{{ env('BASE') . '/all-files/dist/js/adminlte.js' }}"></script>
     @yield('script')
 </body>
 

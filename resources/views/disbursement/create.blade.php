@@ -22,7 +22,8 @@
                                 <input type="file" name="upload" id="upload" class="form-control">
                             </div>
                             <div class="form-group">
-                                <input type="submit" name="upload" id="upload" class="btn btn-primary" value="Upload">
+                                <button type="submit" name="upload" id="upload" class="btn btn-primary"
+                                    value="Upload">Upload</button>
                             </div>
                             @if ($errors->any())
                                 <div>
@@ -44,4 +45,26 @@
             </div>
         </div>
     </div>
+@endsection
+@section('script')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select all forms on the page
+
+            const forms = document.querySelectorAll('form');
+
+            forms.forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    alert('click');
+                    // Disable all submit buttons in the current form
+                    const submitButtons = form.querySelectorAll('button[type="submit"]');
+                    submitButtons.forEach(function(button) {
+                        button.disabled = true; // Disable the button
+                        button.innerText =
+                            "Processing..."; // Optional: Show a loading message
+                    });
+                });
+            });
+        });
+    </script>
 @endsection

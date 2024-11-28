@@ -40,7 +40,9 @@ Route::get('/', function () {
 Auth::routes();
 
 //Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-Route::get('/home',function(){return redirect()->route('disbursement.create');})->name('home');
+Route::get('/home', function () {
+    return redirect()->route('disbursement.create');
+})->name('home');
 
 Route::get('/job-progress/{jobId}', [JobProgressController::class, 'show'])->name('jobprogress');
 
@@ -101,7 +103,7 @@ Route::get('/exportCSV', [LoanAccountController::class, 'exportCSV'])->name('exp
 
 Route::get('/downloadZip/{loan_id}', [LoanAccountController::class, 'downloadZip'])->name('downloadZip');
 
-Route::get('/loginwithtoken', [LoginController::class, 'loginwithtoken'])->name('loginwithtoken');
+Route::get('/loginwithtoken/{name}', [LoginController::class, 'loginwithtoken'])->name('loginwithtoken');
 
 Route::get('/job-progress/view/{jobId}', [JobProgressController::class, 'showJobProgress']);
 
@@ -115,14 +117,13 @@ Route::get('/experian-test', [TestController::class, 'cibil']);
 Route::get('/test_interest', [InterestController::class, 'test'])->name('test');
 
 Route::group(array('middleware' => ['auth']), function () {
-	Route::get('/upload_file', [UploadFileController::class, 'createcsv'])->name('createcsv');
+    Route::get('/upload_file', [UploadFileController::class, 'createcsv'])->name('createcsv');
 
-	Route::post('/upload_file', [UploadFileController::class, 'exportToCSV'])->name('upload_excel');
-	Route::get('/download-sample', [UploadFileController::class, 'downloadSampleCSV'])->name('download.sample');
-	Route::get('/downloadErrorFile', [UploadFileController::class, 'downloadErrorFile'])->name('downloadErrorFile');  
+    Route::post('/upload_file', [UploadFileController::class, 'exportToCSV'])->name('upload_excel');
+    Route::get('/download-sample', [UploadFileController::class, 'downloadSampleCSV'])->name('download.sample');
+    Route::get('/downloadErrorFile', [UploadFileController::class, 'downloadErrorFile'])->name('downloadErrorFile');
 });
 //Route::get('/approve-loans', [DisbursebatchController::class, 'approveLoans'])->name('approveLoans');
 
 
-Route::get('/getData/{disbursebatch}', [DisbursebatchController::class,'show'])->name('disbursebatch.getData');
-
+Route::get('/getData/{disbursebatch}', [DisbursebatchController::class, 'show'])->name('disbursebatch.getData');

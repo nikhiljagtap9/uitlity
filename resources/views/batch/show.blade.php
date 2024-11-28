@@ -1,6 +1,5 @@
 @extends('layout.app')
 @section('content')
-
     <div class="card">
         <div class="card-header">
             <h3 class="card-title mb-0">
@@ -95,7 +94,7 @@
                             @csrf
                             <input type="hidden" name="batch_id" value="{{ $batch->uuid }}">
                             <input type="hidden" name="cbs_api" value="collection">
-                            <button type="submit" class="btn btn-primary" name="submit">Credit To Loan/NBFC
+                            <button type="submit" id="myForm" class="btn btn-primary" name="submit">Credit To Loan/NBFC
                                 Account</button>
                         </form>
                     </div>
@@ -150,4 +149,24 @@
             </div>
         </div>
     </div>
+@endsection
+@section('script')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select all forms on the page
+            const forms = document.querySelectorAll('form');
+
+            forms.forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    // Disable all submit buttons in the current form
+                    const submitButtons = form.querySelectorAll('button[type="submit"]');
+                    submitButtons.forEach(function(button) {
+                        button.disabled = true; // Disable the button
+                        button.innerText =
+                            "Processing..."; // Optional: Show a loading message
+                    });
+                });
+            });
+        });
+    </script>
 @endsection
