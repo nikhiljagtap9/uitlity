@@ -22,7 +22,7 @@ class DisbursebatchController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-     public function __construct(CkycService $ckycService, KycService $KycApiService)
+    public function __construct(CkycService $ckycService, KycService $KycApiService)
     {
         $this->ckycService = $ckycService;
         $this->KycApiService = $KycApiService;
@@ -73,48 +73,48 @@ class DisbursebatchController extends Controller
      */
     public function show(Disbursebatch $disbursebatch, Request $request)
     {
-	// Retrieve filter parameters
+        // Retrieve filter parameters
         $type = $request->input('type'); // 'pan' or 'ckyc'
         $lowerValue = $request->input('lower_value');
         $upperValue = $request->input('upper_value');
         $currentTab = $request->input('current_tab', 'tab2');
 
-        //dd($type,$lowerValue,$upperValue);    
+        //dd($type,$lowerValue,$upperValue);
 
 
         $collection_count = Disbursement::where('batch_id', $disbursebatch->uuid)->count();
         $pending_count = Disbursement::where('batch_id', $disbursebatch->uuid)->where('status', 'Pending')->count();
-        $collections = Disbursement::where('batch_id', $disbursebatch->uuid)->get();
+        $collections = Disbursement::where('batch_id', $disbursebatch->uuid)->paginate(50);
         $approved_count = Disbursement::where('batch_id', $disbursebatch->uuid)->where('status', 'Approved')->count();
         $bre_results = Disbursement::select(DB::raw('COUNT(*) as status_count,SUM(loan_amount) as loan_amount,SUM(sanction_amount) as sanction_amount,SUM(nbfc_sanction_amount) as nbfc_sanction_amount,SUM(bank_sanction_amount) as bank_sanction_amount,status'))
-        ->groupBy('status')
-        ->where('batch_id', $disbursebatch->uuid)
-        ->get();
+            ->groupBy('status')
+            ->where('batch_id', $disbursebatch->uuid)
+            ->get();
         $results = Disbursement::select(DB::raw(' Business_Type, SUM(sanction_amount) as sanction_amount, SUM(nbfc_sanction_amount) as nbfc_sanction_amount, SUM(bank_sanction_amount) as bank_sanction_amount'))
-        ->where('batch_id', $disbursebatch->uuid)
-        ->whereIn('status', ['Done', 'Approved'])
-        ->groupBy('Business_Type')
-	->get();
+            ->where('batch_id', $disbursebatch->uuid)
+            ->whereIn('status', ['Done', 'Approved'])
+            ->groupBy('Business_Type')
+            ->get();
 
 
-	$dataCounts = Disbursement::select(DB::raw('COUNT(*) as total_messages,message'))
-		->groupBy('message')
-		->get();
+        $dataCounts = Disbursement::select(DB::raw('COUNT(*) as total_messages,message'))
+            ->groupBy('message')
+            ->get();
 
         $approvedList =  Disbursement::select(DB::raw('	NBFC_Reference_Number, customer_name, loan_amount, sanction_amount, bank_sanction_amount,status'))
-        ->where('batch_id', $disbursebatch->uuid)
-        ->whereIn('status', ['Done', 'Approved'])
-        //->groupBy('Business_Type','loan_account_number')
-        ->get();
+            ->where('batch_id', $disbursebatch->uuid)
+            ->whereIn('status', ['Done', 'Approved'])
+            //->groupBy('Business_Type','loan_account_number')
+            ->get();
 
         $rejectedList =  Disbursement::select(DB::raw('	 pan_match_score, ckyc_match_score,udyam_match_score, NBFC_Reference_Number, customer_name, loan_amount, sanction_amount, bank_sanction_amount,status,message'))
-        ->where('batch_id', $disbursebatch->uuid)
-        ->whereIn('status', ['Rejected', 'Pending']);
+            ->where('batch_id', $disbursebatch->uuid)
+            ->whereIn('status', ['Rejected', 'Pending']);
         //->groupBy('Business_Type','loan_account_number')
-	//->get();
+        //->get();
 
 
-	if ($type === 'pan') {
+        if ($type === 'pan') {
             $rejectedList->whereBetween('pan_match_score', [$lowerValue, $upperValue]);
         } elseif ($type === 'ckyc') {
             $rejectedList->whereBetween('ckyc_match_score', [$lowerValue, $upperValue]);
@@ -125,9 +125,9 @@ class DisbursebatchController extends Controller
 
         $currentTab = $request->input('current_tab', 'tab1'); // Default to tab1
 
-//dd($rejectedList);
+        //dd($rejectedList);
 
-	return view(
+        return view(
             'disbursebatch.show',
             [
                 'batch' => $disbursebatch,
@@ -136,51 +136,51 @@ class DisbursebatchController extends Controller
                 'collection_count' => $collection_count,
                 'pending_count' => $pending_count,
                 'approved_count' => $approved_count,
-		'bre_results' => $bre_results,
-		 'dataCounts'=>  $dataCounts,
-		'approvedList'=> $approvedList,
-		'rejectedList' => $rejectedList,
-		'rejectedList' => $rejectedList,
+                'bre_results' => $bre_results,
+                'dataCounts' =>  $dataCounts,
+                'approvedList' => $approvedList,
+                'rejectedList' => $rejectedList,
+                'rejectedList' => $rejectedList,
                 'currentTab' => $currentTab,
             ]
         );
     }
 
     public function processRejectedChunks(Request $request)
-{
-    $selectedLoans = $request->input('selectedLoans');
-    if (empty($selectedLoans) || count($selectedLoans) == 0) {
+    {
+        $selectedLoans = $request->input('selectedLoans');
+        if (empty($selectedLoans) || count($selectedLoans) == 0) {
             return redirect()->back()->with('error', 'No loans were selected.');
         }
 
-    $offset = $request->input('offset', 0);
-    $chunkSize = 5; // Define your chunk size
-    
-    $loans = Disbursement::whereIn('NBFC_Reference_Number', $selectedLoans)
-        ->offset($offset)
-        ->limit($chunkSize)
-        ->get();
+        $offset = $request->input('offset', 0);
+        $chunkSize = 5; // Define your chunk size
 
-    foreach ($loans as $loan) {
-        $this->callAPIs($loan);
+        $loans = Disbursement::whereIn('NBFC_Reference_Number', $selectedLoans)
+            ->offset($offset)
+            ->limit($chunkSize)
+            ->get();
+
+        foreach ($loans as $loan) {
+            $this->callAPIs($loan);
+        }
+
+        $nextOffset = $offset + $chunkSize;
+        $moreData = $nextOffset < count($selectedLoans);
+
+        return response()->json([
+            'moreData' => $moreData,
+            'nextOffset' => $nextOffset,
+        ]);
     }
-
-    $nextOffset = $offset + $chunkSize;
-    $moreData = $nextOffset < count($selectedLoans);
-
-    return response()->json([
-        'moreData' => $moreData,
-        'nextOffset' => $nextOffset,
-    ]);
-}
 
     public function processRejectedChunksold(Request $request)
     {
-    	// Retrieve the selected loans from query parameters
+        // Retrieve the selected loans from query parameters
         $selectedLoans = $request->input('selectedLoans');
-	if( !$selectedLoans){
-		return redirect()->back()->with('error', 'No loans were selected.');
-	}
+        if (!$selectedLoans) {
+            return redirect()->back()->with('error', 'No loans were selected.');
+        }
         // Check if selected_loans is an array
         if (is_array($selectedLoans)) {
             // If it's an array, just assign it directly
@@ -200,8 +200,8 @@ class DisbursebatchController extends Controller
         foreach ($selectedLoans as $loanId) {
             // Find the loan based on the loan ID
             $loan = Disbursement::where('NBFC_Reference_Number', $loanId)->first();
-	//	dd($loan);
-	    $this->callAPIs($loan);
+            //	dd($loan);
+            $this->callAPIs($loan);
             // if ($loan) {
             //     // Update the existing loan with approval information
             //     $loan->update([
@@ -249,86 +249,88 @@ class DisbursebatchController extends Controller
      */
     public function destroy(Disbursebatch $disbursebatch)
     {
-	$disbursements = Disbursement::where('batch_id',$disbursebatch->uuid)->delete();
+        $disbursements = Disbursement::where('batch_id', $disbursebatch->uuid)->delete();
         $disbursebatch->delete();
         $input['deleted_by'] = Auth::user()->name;
         $disbursebatch->update($input);
-        return redirect(route('disbursebatch.index'))->with('success', 'Batch '.$disbursebatch->uuid .' deleted successfully!');
+        return redirect(route('disbursebatch.index'))->with('success', 'Batch ' . $disbursebatch->uuid . ' deleted successfully!');
     }
 
-    public function callAPIs($data){
+    public function callAPIs($data)
+    {
 
-        if (!$data->ckyc_match_score && config('global.ckyc_check')==true) {
-            if(!$data->ckyc){
-                $data->update(['message'=>'CKYC number not available', 'status' => 'Rejected']);
+        if (!$data->ckyc_match_score && config('global.ckyc_check') == true) {
+            if (!$data->ckyc) {
+                $data->update(['message' => 'CKYC number not available', 'status' => 'Rejected']);
                 return;
             }
-        $response = $this->ckycService->ckycverify($data->ckyc, $data->dob,$data);
-        $arr = json_decode($response,TRUE);
-        $personal_detail = isset($arr['PID']['PID_DATA']['PERSONAL_DETAILS'])?$arr['PID']['PID_DATA']['PERSONAL_DETAILS']:null;
-        $full_name = isset($personal_detail['FULLNAME'])?$personal_detail['FULLNAME']:null;
-        $pan_no = isset($personal_detail['PAN'])?$personal_detail['PAN']:null;
-        $image_details = isset($arr['PID']['PID_DATA']['IMAGE_DETAILS'])?$arr['PID']['PID_DATA']['IMAGE_DETAILS']:null;
-        if($pan_no){
-            if($data->PAN!=$pan_no){
-                $data->update(['message'=>'Invalid CKYC Details, PAN Not Matching', 'status' => 'Rejected']);
-                return ;
+            $response = $this->ckycService->ckycverify($data->ckyc, $data->dob, $data);
+            $arr = json_decode($response, TRUE);
+            $personal_detail = isset($arr['PID']['PID_DATA']['PERSONAL_DETAILS']) ? $arr['PID']['PID_DATA']['PERSONAL_DETAILS'] : null;
+            $full_name = isset($personal_detail['FULLNAME']) ? $personal_detail['FULLNAME'] : null;
+            $pan_no = isset($personal_detail['PAN']) ? $personal_detail['PAN'] : null;
+            $image_details = isset($arr['PID']['PID_DATA']['IMAGE_DETAILS']) ? $arr['PID']['PID_DATA']['IMAGE_DETAILS'] : null;
+            if ($pan_no) {
+                if ($data->PAN != $pan_no) {
+                    $data->update(['message' => 'Invalid CKYC Details, PAN Not Matching', 'status' => 'Rejected']);
+                    return;
+                }
             }
-        }
-        if($full_name){
-            $percentage = 0;
-            $roundedPercentage = $this->nameMatchPercent(strtolower($data->CUSTOMER_NAME), strtolower($full_name));
-            $data->update(['ckyc_match_score'=> $roundedPercentage]);
-            if ($roundedPercentage < 75) {
-                $data->update(['message'=>'CKYC Verification Failed, Name Match Per. is ' . $roundedPercentage . '%', 'status' => 'Rejected']);
-                return;
-            }
-        }
-    }
-
-    if(strtolower($data->Business_Type) == 'msme' && config('global.udyam_check')==true){
-        if(!$data->Udyam_no){
-            $data->update(['message'=>'Udyam number not available', 'status' => 'Rejected']);
-            return ;
-        }
-        if (!$data->udyam_match_score) {
-            $udyog_details = $this->KycApiService->udyamVerification($data->Udyam_no, $data);
-            if ($udyog_details === false) {
-                $data->update(['message'=>'Udyam API Failed', 'status' => 'Rejected']);
-                return ;
-            } else {
+            if ($full_name) {
                 $percentage = 0;
-                $udyaogPer = $this->nameMatchPercent(strtolower($data->CUSTOMER_NAME), strtolower($udyog_details['nameOfEnterprise']));
-                $data->update(['udyam_match_score'=>$udyaogPer]);
-                if ($udyaogPer < 75) {
-                    $data->update(['message'=>'Udyam Aadhaar Verification Failed, Name Match Per. is ' . $udyaogPer . '%', 'status' => 'Rejected']);
-                    return ;
+                $roundedPercentage = $this->nameMatchPercent(strtolower($data->CUSTOMER_NAME), strtolower($full_name));
+                $data->update(['ckyc_match_score' => $roundedPercentage]);
+                if ($roundedPercentage < 75) {
+                    $data->update(['message' => 'CKYC Verification Failed, Name Match Per. is ' . $roundedPercentage . '%', 'status' => 'Rejected']);
+                    return;
                 }
             }
         }
-    }
-    $user = auth()->user();
-    	$data->update([
-                     'status' => 'Approved',
-                     'approved_by' => $user->name,
-		     'approved_at' => now(),
-		     'message'=>'Bre approved manually'
-                 ]);
+
+        if (strtolower($data->Business_Type) == 'msme' && config('global.udyam_check') == true) {
+            if (!$data->Udyam_no) {
+                $data->update(['message' => 'Udyam number not available', 'status' => 'Rejected']);
+                return;
+            }
+            if (!$data->udyam_match_score) {
+                $udyog_details = $this->KycApiService->udyamVerification($data->Udyam_no, $data);
+                if ($udyog_details === false) {
+                    $data->update(['message' => 'Udyam API Failed', 'status' => 'Rejected']);
+                    return;
+                } else {
+                    $percentage = 0;
+                    $udyaogPer = $this->nameMatchPercent(strtolower($data->CUSTOMER_NAME), strtolower($udyog_details['nameOfEnterprise']));
+                    $data->update(['udyam_match_score' => $udyaogPer]);
+                    if ($udyaogPer < 75) {
+                        $data->update(['message' => 'Udyam Aadhaar Verification Failed, Name Match Per. is ' . $udyaogPer . '%', 'status' => 'Rejected']);
+                        return;
+                    }
+                }
+            }
+        }
+        $user = auth()->user();
+        $data->update([
+            'status' => 'Approved',
+            'approved_by' => $user->name,
+            'approved_at' => now(),
+            'message' => 'Bre approved manually'
+        ]);
     }
 
-    private function nameMatchPercent($name1, $name2) {
+    private function nameMatchPercent($name1, $name2)
+    {
         // Convert names to lowercase and split them into words
         $name1Words = explode(" ", strtolower($name1));
         $name2Words = explode(" ", strtolower($name2));
-    
+
         // Sort the words to ignore the order
         sort($name1Words);
         sort($name2Words);
-    
+
         // Initialize total similarity and match counts
         $totalSimilarity = 0;
         $wordCount = count($name1Words) + count($name2Words); // Total number of words in both names
-    
+
         // Compare each word from name2 against each word in name1
         foreach ($name1Words as $word1) {
             $bestMatch = 0;
@@ -340,12 +342,9 @@ class DisbursebatchController extends Controller
             }
             $totalSimilarity += $bestMatch;
         }
-    
+
         // Calculate the percentage similarity
         $averageSimilarity = ($totalSimilarity / count($name1Words)); // Average similarity across name1
         return round($averageSimilarity, 2);
-       }
-    
+    }
 }
-
-

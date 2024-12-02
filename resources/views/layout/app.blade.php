@@ -253,7 +253,7 @@
                                     <div class="d-flex">
                                         <div class="nav-text">
                                             <i class="fa fa-plus"></i>
-                                            <p>Upload Disbursement CSV</p>
+                                            <p>Create Application</p>
                                         </div>
                                     </div>
                                 </a>
@@ -284,13 +284,22 @@
                                 <a href="{{ route('createcsv') }}" class="nav-link">
                                     <div class="d-flex">
                                         <div class="nav-text">
-                                            <i class="fa fa-plus"></i>
+                                            <i class="fa fa-download"></i>
                                             <p>Excel to CSV Convert/Download</p>
                                         </div>
                                     </div>
                                 </a>
                             </li>
-
+                            <li class="nav-item">
+                                <a href="{{ route('disbursebatch.index') }}" class="nav-link">
+                                    <div class="d-flex">
+                                        <div class="nav-text">
+                                            <i class="fa fa-list"></i>
+                                            <p>Applications Batches</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
 
                             <li class="nav-item ">
                                 <a href="{{ route('loan_account.index') }}" class="nav-link">
@@ -303,16 +312,7 @@
                                 </a>
                             </li>
 
-                            <li class="nav-item">
-                                <a href="{{ route('disbursebatch.index') }}" class="nav-link">
-                                    <div class="d-flex">
-                                        <div class="nav-text">
-                                            <i class="fa fa-list"></i>
-                                            <p>Disbursement Batches</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
+
                             <li class="nav-item">
                                 <a href="{{ route('batch.index') }}" class="nav-link">
                                     <div class="d-flex">
@@ -379,7 +379,7 @@
                                 </a>
                             </li>
 
-                            <li class="nav-item">
+                            <li class="nav-item" style="display: none;">
                                 <a href="{{ route('setting.create') }}" class="nav-link">
                                     <div class="d-flex">
                                         <div class="nav-text">

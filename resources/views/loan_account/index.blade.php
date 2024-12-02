@@ -1,6 +1,7 @@
 @extends('layout.app')
 @section('head')
-    <link rel="stylesheet" type="text/css" href="{{ env('BASE').('/all-files/plugins/daterangepicker/daterangepicker.css') }}" />
+    <link rel="stylesheet" type="text/css"
+        href="{{ env('BASE') . '/all-files/plugins/daterangepicker/daterangepicker.css' }}" />
 
     <style>
         .alert-warning {
@@ -138,8 +139,9 @@
     </div>
 @endsection
 @section('script')
-    <script type="text/javascript" src="{{ env('BASE').('/all-files/plugins/daterangepicker/moment.min.js') }}"></script>
-    <script type="text/javascript" src="{{ env('BASE').('/all-files/plugins/daterangepicker/daterangepicker.min.js') }}"></script>
+    <script type="text/javascript" src="{{ env('BASE') . '/all-files/plugins/daterangepicker/moment.min.js' }}"></script>
+    <script type="text/javascript" src="{{ env('BASE') . '/all-files/plugins/daterangepicker/daterangepicker.min.js' }}">
+    </script>
 
     <script>
         var start_date, end_date;

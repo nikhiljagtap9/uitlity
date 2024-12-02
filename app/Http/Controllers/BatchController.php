@@ -21,7 +21,8 @@ class BatchController extends Controller
         $batch = Batch::where('status', 'Done')->get();
 
         //$loan_account = LoanAccount::where('loan_status', 'active')->get();
-        $bank_loan_date = LoanAccount::orderBy('id', 'DESC')->get()[0]['bank_loan_date'];
+        //$bank_loan_date = LoanAccount::orderBy('id', 'DESC')->get()[0]['bank_loan_date'];
+        $bank_loan_date = LoanAccount::select('bank_loan_date')->latest('id')->first()['bank_loan_date'];
         $lastdisbused = LoanAccount::where('loan_status', 'active')->where('bank_loan_date', $bank_loan_date)
             ->selectRaw('SUM(sanction_limit) as total_sanction_limit')->get()[0];
         //dd($lastdisbused->total_sanction_limit);

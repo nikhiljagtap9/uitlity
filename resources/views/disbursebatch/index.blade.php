@@ -2,34 +2,41 @@
 @section('head')
 @endsection
 @section('content')
-<style>
+    <style>
         * {
-	   box-sizing: border-box;
-	  }
-	.fade {
-	   opacity: 1 !important;
-	}
+            box-sizing: border-box;
+        }
+
+        .fade {
+            opacity: 1 !important;
+        }
+
         .modal.fade .modal-dialog {
-	   transform: translate(0, 10%);
-	}
-	body {
-	   background: #e7e7e7;
-	}
-	.tab {
-	   width: 100%;
-	   overflow: hidden;
-	}
-	.tab button {
-	   background-color: hsl(210, 17%, 93%);
-	   border: none;
-	   outline: none;
-           padding: 10px 16px;
-           font-weight: bold;
-           transition: 0.3s;
+            transform: translate(0, 10%);
         }
+
+        body {
+            background: #e7e7e7;
+        }
+
+        .tab {
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .tab button {
+            background-color: hsl(210, 17%, 93%);
+            border: none;
+            outline: none;
+            padding: 10px 16px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
         .tab button:hover {
-           background-color: #4491d0;
+            background-color: #4491d0;
         }
+
         .tab button.active {
             background-color: #90caf8;
             /* Primary blue for active tab */
@@ -90,20 +97,21 @@
                                     <td align="right">{{ number_format($batch->total_sanction_amount, 2) }}</td>
                                     <td align="right">
                                         {{ number_format($batch->bank_sanction_amount, 2) }}
-				    </td>
-				    <td align="right">{{ number_format($batch->nbfc_sanction_amount, 2) }}</td>
+                                    </td>
+                                    <td align="right">{{ number_format($batch->nbfc_sanction_amount, 2) }}</td>
                                     <td>{{ $batch->status }}</td>
                                     <td>
                                         <a href="{{ route('disbursebatch.show', [$batch]) }}"
-					    class="btn btn-primary">View</a>
-					@if($batch->status != 'Disbursed')
-					<form id="deleteForm" action="{{route('disbursebatch.destroy',[$batch])}}" method="POST" class="form-group">
-                                    {{csrf_field()}}
-                                    <input type="hidden" name="_method" value="DELETE">
-				</form>
-				<button class="btn btn-danger " data-toggle="modal"
-                                    data-target="#confirmationModal" data-backdrop = "false">Delete</button>
-				@endif
+                                            class="btn btn-primary">View</a>
+                                        @if ($batch->status != 'Disbursed')
+                                            <form id="deleteForm" action="{{ route('disbursebatch.destroy', [$batch]) }}"
+                                                method="POST" class="form-group">
+                                                {{ csrf_field() }}
+                                                <input type="hidden" name="_method" value="DELETE">
+                                            </form>
+                                            <button class="btn btn-danger " data-toggle="modal"
+                                                data-target="#confirmationModal" data-backdrop = "false">Delete</button>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -118,38 +126,37 @@
 
 
 
-<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="confirmationModalLabel">Confirm Action</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Confirm Action</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
 
-                        </div>
-			<div class="modal-body">
-                            <div class="alert text-danger" role="alert">
-                                <strong>Are you sure you want to perform this action?</strong>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="confirmSubmit">Confirm</button>
-                        </div>
+                </div>
+                <div class="modal-body">
+                    <div class="alert text-danger" role="alert">
+                        <strong>Are you sure you want to perform this action?</strong>
                     </div>
                 </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmSubmit">Confirm</button>
+                </div>
             </div>
+        </div>
+    </div>
 
-	<script>
-            // JavaScript to handle form submission when "Confirm" is clicked
-	    document.getElementById('confirmSubmit').addEventListener('click', function() {
-	      // Submit the form
-	      document.getElementById('deleteForm').submit();
-	    });
-	</script>
-	@endsection
-	@section('script')
-	@endsection
-	    
+    <script>
+        // JavaScript to handle form submission when "Confirm" is clicked
+        document.getElementById('confirmSubmit').addEventListener('click', function() {
+            // Submit the form
+            document.getElementById('deleteForm').submit();
+        });
+    </script>
+@endsection
+@section('script')
+@endsection

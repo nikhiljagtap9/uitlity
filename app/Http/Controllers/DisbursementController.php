@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\GoldRate;
+use Illuminate\Support\Facades\Storage;
+
 
 class DisbursementController extends Controller
 {
@@ -90,7 +92,7 @@ class DisbursementController extends Controller
                     if ($count > 0) {
                         $datatostore['status'] = 'Duplicate';
                     } else {
-                        $count = Disbursement::where('NBFC_Reference_Number', $NBFC_Reference_Number)->where('status','!=', 'Rejected')->count();
+                        $count = Disbursement::where('NBFC_Reference_Number', $NBFC_Reference_Number)->where('status', '!=', 'Rejected')->count();
                         if ($count > 0) {
                             $datatostore['status'] = 'Duplicate';
                         }
@@ -103,9 +105,9 @@ class DisbursementController extends Controller
 
                 $total_loan_amount = (float)$data['Sanction_limit'] + $total_loan_amount;
                 $total_sanction_amount = (float)$data['POS'] + $total_sanction_amount;
-                $nbfc_sanction_amount = ((float)$data['POS'] *0.2 ) + $nbfc_sanction_amount;
-                $bank_sanction_amount = ((float)$data['POS']*0.8) + $bank_sanction_amount;
-                $datatostore['nbfc_sanction_amount'] = (float)$data['POS']*0.2;
+                $nbfc_sanction_amount = ((float)$data['POS'] * 0.2) + $nbfc_sanction_amount;
+                $bank_sanction_amount = ((float)$data['POS'] * 0.8) + $bank_sanction_amount;
+                $datatostore['nbfc_sanction_amount'] = (float)$data['POS'] * 0.2;
                 $datatostore['SANCTION_DATE'] = $data['Sanction_date'];
                 $datatostore['Market_Rate'] = str_replace(',', '', $data['Market_rate']);
                 $datatostore['Total_Value'] = str_replace(',', '', $data['Total_value']);
@@ -115,7 +117,7 @@ class DisbursementController extends Controller
                 $datatostore['cersai_date'] = $data['Cersai_date'];
                 $datatostore['sanction_amount'] = $data['POS'];
                 $datatostore['dob'] = $data['Dob'];
-                $datatostore['bank_sanction_amount'] = (float)$data['POS']*0.8;
+                $datatostore['bank_sanction_amount'] = (float)$data['POS'] * 0.8;
                 $datatostore['SEC_ID_TYPE'] = $data['Sec-id-type'];
                 $datatostore['NBFC_Reference_Number'] = $data['Nbfc_reference_number'];
                 $datatostore['CGCL_Customer_Number'] = $data['Cgcl_customer_number'];
@@ -126,7 +128,7 @@ class DisbursementController extends Controller
                 $datatostore['MIDDLE_NAME'] = $data['Middle_name'];
                 $datatostore['LAST_NAME'] = $data['Last_name'];
                 $datatostore['GENDER'] = $data['Gender'];
-                $datatostore['MOBILE_NO'] =str_replace('mo','',$data['Mobile_no']);
+                $datatostore['MOBILE_NO'] = str_replace('mo', '', $data['Mobile_no']);
                 $datatostore['EMAIL'] = $data['City'];
                 $datatostore['AGE'] = $data['Age'];
                 $datatostore['ADD1'] = $data['Add1'];
@@ -150,7 +152,7 @@ class DisbursementController extends Controller
                 $datatostore['LTV'] = $data['LTV'];
                 $datatostore['Gold_Purity'] = $data['Gold_purity'];
                 $datatostore['PAN'] = $data['Pan'];
-                $datatostore['ckyc'] = str_replace('ckyc','',$data['Ckyc_number']);
+                $datatostore['ckyc'] = str_replace('ckyc', '', $data['Ckyc_number']);
                 $datatostore['CKYC_DATE'] = $data['Ckyc date'];
                 $datatostore['POS'] = $data['POS'];
                 $datatostore['INSURANCE_FINANCED'] = $data['Insurance_financed'];
@@ -173,8 +175,8 @@ class DisbursementController extends Controller
                 $datatostore['Security_Interest_ID'] = $data['Security_interest_id'];
                 $datatostore['CIC'] = $data['CIC'];
                 $datatostore['CGCL_ROI'] = $data['CGCL_ROI'];
-                $datatostore['Udyam_no'] = isset($data['Udyam_no'])?$data['Udyam_no']:NULL;
-                 //dd($datatostore);
+                $datatostore['Udyam_no'] = isset($data['Udyam_no']) ? $data['Udyam_no'] : NULL;
+                //dd($datatostore);
 
                 DB::enableQueryLog();
                 Disbursement::create($datatostore);
@@ -202,7 +204,11 @@ class DisbursementController extends Controller
      */
     public function show(Disbursement $disbursement)
     {
-        //
+        $start = Carbon::parse($disbursement->nbfc_loan_date);
+        $closureDate = $start->addMonths($disbursement->loan_tenure);
+        $closureDate = $closureDate->subDay();
+
+        return view('disbursement.show', ['loan_account' => $disbursement, 'closureDate' => $closureDate]);
     }
 
     /**
@@ -213,7 +219,7 @@ class DisbursementController extends Controller
      */
     public function edit(Disbursement $disbursement)
     {
-        //
+        return view('disbursement.edit', ['disbursement' => $disbursement]);
     }
 
     /**
@@ -225,7 +231,61 @@ class DisbursementController extends Controller
      */
     public function update(Request $request, Disbursement $disbursement)
     {
-        //
+
+        //$request->validate([
+        //    'file' => 'required|file|mimes:jpg,png,pdf,jpeg|max:2048', // 2MB max
+        //]);
+
+        $utr_bom_pos_update = $request->utr_bom_pos_update;
+        if ($utr_bom_pos_update) {
+            $disbursement->update([
+                'utr_bom_pos_update' => $utr_bom_pos_update
+            ]);
+        }
+        //$fileName1 = $fileName2 = $fileName3 = $fileName4 = NULL;
+        //dd($request->utr_bom_pos_update);
+        $folderPath = 'uploads/' . $disbursement->lapp_id;
+        Storage::disk('public')->makeDirectory($folderPath);
+
+        $fileName1 = $fileName2 = $fileName3 = $fileName4 = NULL;
+
+        if ($request->hasFile('upload_1')) {
+            $file1 = $request->file('upload_1');
+            $fileName1 = $file1->getClientOriginalName();
+            $filePath1 = $file1->store('uploads/' . $disbursement->lapp_id . '/' . $fileName1, 'public');
+            $disbursement->update([
+                'file_1' => $fileName1,
+            ]);
+        }
+
+        if ($request->hasFile('upload_2')) {
+            $file2 = $request->file('upload_2');
+            $fileName2 = $file2->getClientOriginalName();
+            $filePath2 = $file2->store('uploads/' . $disbursement->lapp_id . '/' . $fileName2, 'public');
+            $disbursement->update([
+                'file_2' => $fileName2,
+            ]);
+        }
+
+        if ($request->hasFile('upload_3')) {
+            $file3 = $request->file('upload_3');
+            $fileName3 = $file3->getClientOriginalName();
+            $filePath3 = $file3->store('uploads/' . $disbursement->lapp_id . '/' . $fileName3, 'public');
+            $disbursement->update([
+                'file_3' => $fileName3,
+            ]);
+        }
+
+        if ($request->hasFile('upload_4')) {
+            $file4 = $request->file('upload_4');
+            $fileName4 = $file4->getClientOriginalName();
+            $filePath4 = $file4->store('uploads/' . $disbursement->lapp_id . '/' . $fileName4, 'public');
+            $disbursement->update([
+                'file_4' => $fileName4,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Application Updated');
     }
 
     /**
@@ -241,7 +301,7 @@ class DisbursementController extends Controller
 
     public function processChunks(Request $request)
     {
-        
+
         /**
          *
          */
@@ -311,7 +371,7 @@ class DisbursementController extends Controller
     }
     private function apiVerifytest($data)
     {
-       /*     if ($pan_details === false) {
+        /*     if ($pan_details === false) {
                 $arr['message'] = 'Pan Verification Failed';
                 $arr['status'] = 'Rejected';
                 return $arr;
@@ -330,53 +390,51 @@ class DisbursementController extends Controller
             $arr['status'] = 'Rejected';
             return $arr;
 	}
-	
+
 	*/
-	    if ($data->ckyc) {
-            $response = $this->ckycService->ckycverify($data->ckyc, $data->dob,$data);
-	    if($response==false){
-	    	$arr['message'] = 'CKYC API Failed';
+        if ($data->ckyc) {
+            $response = $this->ckycService->ckycverify($data->ckyc, $data->dob, $data);
+            if ($response == false) {
+                $arr['message'] = 'CKYC API Failed';
                 $arr['status'] = 'API Failed';
                 return $arr;
+            }
+            $arr = json_decode($response, TRUE);
+            if (isset($arr['CKYC_INQ']['ERROR'])) {
 
-	    }
-	    $arr = json_decode($response,TRUE);
-	    if(isset($arr['CKYC_INQ']['ERROR'])){
-			
- 		$arr['message'] = $arr['CKYC_INQ']['ERROR'];
-            	$arr['status'] = 'Rejected';
-            	return $arr;
-                        }
-                        
-	    $personal_detail =isset($arr['PID']['PID_DATA']['PERSONAL_DETAILS'])?$arr['PID']['PID_DATA']['PERSONAL_DETAILS']:NULL;
-            $full_name = isset($personal_detail['FULLNAME'])?$personal_detail['FULLNAME']:NULL;
-            $pan_no = isset($personal_detail['PAN'])?$personal_detail['PAN']:NULL;
-            $image_details = isset($arr['PID']['PID_DATA']['IMAGE_DETAILS'])?$arr['PID']['PID_DATA']['IMAGE_DETAILS']:NULL;
-            if($pan_no){
-                                if($data->PAN!=$pan_no){
-                                        $arr['message'] = 'Invalid CKYC Details, PAN Not Matching';
-                                        $arr['status'] = 'Rejected';
-                                        return $arr;
-                                }
-                        }
-                        if($full_name){
+                $arr['message'] = $arr['CKYC_INQ']['ERROR'];
+                $arr['status'] = 'Rejected';
+                return $arr;
+            }
+
+            $personal_detail = isset($arr['PID']['PID_DATA']['PERSONAL_DETAILS']) ? $arr['PID']['PID_DATA']['PERSONAL_DETAILS'] : NULL;
+            $full_name = isset($personal_detail['FULLNAME']) ? $personal_detail['FULLNAME'] : NULL;
+            $pan_no = isset($personal_detail['PAN']) ? $personal_detail['PAN'] : NULL;
+            $image_details = isset($arr['PID']['PID_DATA']['IMAGE_DETAILS']) ? $arr['PID']['PID_DATA']['IMAGE_DETAILS'] : NULL;
+            if ($pan_no) {
+                if ($data->PAN != $pan_no) {
+                    $arr['message'] = 'Invalid CKYC Details, PAN Not Matching';
+                    $arr['status'] = 'Rejected';
+                    return $arr;
+                }
+            }
+            if ($full_name) {
                 $percentage = 0;
                 similar_text(strtolower($data->CUSTOMER_NAME), strtolower($full_name), $percentage);
                 $roundedPercentage = round($percentage, 2); // Rounds to 2 decimal places
-                                //dd($roundedPercentage);
+                //dd($roundedPercentage);
                 if ($roundedPercentage < 75) {
                     $arr['message'] = 'Pan Verification Failed, Name Match Per. is ' . $roundedPercentage . '%';
                     $arr['status'] = 'Rejected';
                 }
-                        }
-
+            }
         } else {
             $arr['message'] = 'CKYC Number Not Available';
             $arr['status'] = 'Rejected';
             return $arr;
-	}
+        }
 
-	/*
+        /*
         if ($data->Udyam_no) {
             $udyog_details = $this->KycApiService->udyamVerification($data->UDYAM_REGN_NO, $data);
             if ($udyog_details === false) {
@@ -397,14 +455,14 @@ class DisbursementController extends Controller
     }
         */
 
-	 
+
         $arr['status'] = 'Approved';
         return $arr;
-}
+    }
 
-private function apiVerify($data)
+    private function apiVerify($data)
     {
-/*
+        /*
         if ($data->PAN) {
             $pan_details = $this->KycApiService->PanVerification($data->PAN, $data);
             if ($pan_details === false) {
@@ -430,52 +488,50 @@ private function apiVerify($data)
 	}
 
  */
-	    if ($data->ckyc) {
-            $response = $this->ckycService->ckycverify($data->ckyc, $data->dob,$data);
-	    if($response==false){
-	    	$arr['message'] = 'CKYC API Failed';
+        if ($data->ckyc) {
+            $response = $this->ckycService->ckycverify($data->ckyc, $data->dob, $data);
+            if ($response == false) {
+                $arr['message'] = 'CKYC API Failed';
                 $arr['status'] = 'API Failed';
                 return $arr;
+            }
+            $arr = json_decode($response, TRUE);
+            if (isset($arr['CKYC_INQ']['ERROR'])) {
 
-	    }
-	    $arr = json_decode($response,TRUE);
-	    if(isset($arr['CKYC_INQ']['ERROR'])){
+                $arr['message'] = $arr['CKYC_INQ']['ERROR'];
+                $arr['status'] = 'Rejected';
+                return $arr;
+            }
 
- 		$arr['message'] = $arr['CKYC_INQ']['ERROR'];
-            	$arr['status'] = 'Rejected';
-            	return $arr;
-                        }
-
-	    $personal_detail =isset($arr['PID']['PID_DATA']['PERSONAL_DETAILS'])?$arr['PID']['PID_DATA']['PERSONAL_DETAILS']:NULL;
-            $full_name = isset($personal_detail['FULLNAME'])?$personal_detail['FULLNAME']:NULL;
-            $pan_no = isset($personal_detail['PAN'])?$personal_detail['PAN']:NULL;
-            $image_details = isset($arr['PID']['PID_DATA']['IMAGE_DETAILS'])?$arr['PID']['PID_DATA']['IMAGE_DETAILS']:NULL;
-            if($pan_no){
-                                if($data->PAN!=$pan_no){
-                                        $arr['message'] = 'Invalid CKYC Details, PAN Not Matching';
-                                        $arr['status'] = 'Rejected';
-                                        return $arr;
-                                }
-                        }
-                        if($full_name){
-				$percentage = 0;
-				$roundedPercentage = $this->nameMatchPercent(strtolower($data->CUSTOMER_NAME), strtolower($full_name));
-				$data->update(['ckyc_match_score',$roundedPercentage]);
-               // similar_text(strtolower($data->CUSTOMER_NAME), strtolower($full_name), $percentage);
-               // $roundedPercentage = round($percentage, 2); // Rounds to 2 decimal places
-                                //dd($roundedPercentage);
+            $personal_detail = isset($arr['PID']['PID_DATA']['PERSONAL_DETAILS']) ? $arr['PID']['PID_DATA']['PERSONAL_DETAILS'] : NULL;
+            $full_name = isset($personal_detail['FULLNAME']) ? $personal_detail['FULLNAME'] : NULL;
+            $pan_no = isset($personal_detail['PAN']) ? $personal_detail['PAN'] : NULL;
+            $image_details = isset($arr['PID']['PID_DATA']['IMAGE_DETAILS']) ? $arr['PID']['PID_DATA']['IMAGE_DETAILS'] : NULL;
+            if ($pan_no) {
+                if ($data->PAN != $pan_no) {
+                    $arr['message'] = 'Invalid CKYC Details, PAN Not Matching';
+                    $arr['status'] = 'Rejected';
+                    return $arr;
+                }
+            }
+            if ($full_name) {
+                $percentage = 0;
+                $roundedPercentage = $this->nameMatchPercent(strtolower($data->CUSTOMER_NAME), strtolower($full_name));
+                $data->update(['ckyc_match_score', $roundedPercentage]);
+                // similar_text(strtolower($data->CUSTOMER_NAME), strtolower($full_name), $percentage);
+                // $roundedPercentage = round($percentage, 2); // Rounds to 2 decimal places
+                //dd($roundedPercentage);
                 if ($roundedPercentage < 75) {
                     $arr['message'] = 'Pan Verification Failed, Name Match Per. is ' . $roundedPercentage . '%';
                     $arr['status'] = 'Rejected';
                 }
-                        }
-
+            }
         } else {
             $arr['message'] = 'CKYC Number Not Available';
             $arr['status'] = 'Rejected';
             return $arr;
-	}
-/*	
+        }
+        /*
         if ($data->Udyam_no) {
             $udyog_details = $this->KycApiService->udyamVerification($data->Udyam_no, $data);
             if ($udyog_details === false) {
@@ -505,111 +561,111 @@ private function apiVerify($data)
     {
         /**
          * PhonePay BRE
-	 */
-	    if($data->POS <= 0){
-	   	$arr['message'] = 'Principal Outstanding can not be equal to or less than 0';
-                $arr['status'] = 'Rejected';
-                return $arr; 
-	    } 
-	    
-	    if($data->sanction_amount <= 0){
-                $arr['message'] = 'Sanction Amount can not be equal to or less than 0';
-                $arr['status'] = 'Rejected';
-                return $arr;
-            }
+         */
+        if ($data->POS <= 0) {
+            $arr['message'] = 'Principal Outstanding can not be equal to or less than 0';
+            $arr['status'] = 'Rejected';
+            return $arr;
+        }
+
+        if ($data->sanction_amount <= 0) {
+            $arr['message'] = 'Sanction Amount can not be equal to or less than 0';
+            $arr['status'] = 'Rejected';
+            return $arr;
+        }
 
 
-	if(!$data->ckyc){
+        if (!$data->ckyc) {
             $arr['message'] = 'Ckyc number empty';
             $arr['status'] = 'Rejected';
             return $arr;
-        }	
-	    $arr = array();
-//		dd(strtolower($data->Business_Type));
-	    if(strtolower($data->Business_Type) != 'agri' && strtolower($data->Business_Type) != 'msme'){
-		$arr['message'] = 'Invalid Business Type';
-                $arr['status'] = 'Rejected';
-                return $arr;
-	    }
-	    
-	    if((float)$data->POS > (float)$data->loan_amount){
-	    	$arr['message'] = 'Principal Outstanding greater than Sanction Limit';
-                $arr['status'] = 'Rejected';
-                return $arr;
-	    } 
-	    if((float)$data->loan_amount<25000.00){
-                $arr['message'] = 'Sanction Amount Less Than Min Limit';
-                $arr['status'] = 'Rejected';
-		return $arr;
-	    }
-	    $total_sanction_amt_pan_agri = 0;
-	    $total_sanction_amt_pan_msme = 0;
-	    $total_sanction_amt_ckyc_agri = 0;
-            $total_sanction_amt_cky_msme = 0;
-	    $total_combined_pan = 0;
-	    $total_combined_ckyc = 0;
+        }
+        $arr = array();
+        //		dd(strtolower($data->Business_Type));
+        if (strtolower($data->Business_Type) != 'agri' && strtolower($data->Business_Type) != 'msme') {
+            $arr['message'] = 'Invalid Business Type';
+            $arr['status'] = 'Rejected';
+            return $arr;
+        }
 
-	    if($data->PAN){
-	    $total_sanction_amt_pan_agri = Disbursement::select(DB::raw('SUM(loan_amount) as total_sanction_amt'))
-		->where('PAN', $data->PAN)
-		->where('Business_Type','Agri')
-		->where('status', '!=','Duplicate')
-                ->where('status', '!=','Rejected')
-		->get()[0]->total_sanction_amt;
-	    $total_sanction_amt_pan_msme = Disbursement::select(DB::raw('SUM(loan_amount) as total_sanction_amt'))
+        if ((float)$data->POS > (float)$data->loan_amount) {
+            $arr['message'] = 'Principal Outstanding greater than Sanction Limit';
+            $arr['status'] = 'Rejected';
+            return $arr;
+        }
+        if ((float)$data->loan_amount < 25000.00) {
+            $arr['message'] = 'Sanction Amount Less Than Min Limit';
+            $arr['status'] = 'Rejected';
+            return $arr;
+        }
+        $total_sanction_amt_pan_agri = 0;
+        $total_sanction_amt_pan_msme = 0;
+        $total_sanction_amt_ckyc_agri = 0;
+        $total_sanction_amt_cky_msme = 0;
+        $total_combined_pan = 0;
+        $total_combined_ckyc = 0;
+
+        if ($data->PAN) {
+            $total_sanction_amt_pan_agri = Disbursement::select(DB::raw('SUM(loan_amount) as total_sanction_amt'))
                 ->where('PAN', $data->PAN)
-		->where('Business_Type','Msme')
-		->where('status', '!=','Duplicate')
-		->where('status', '!=','Rejected')
-		->get()[0]->total_sanction_amt;
-	   }
-	    $total_sanction_amt_ckyc_agri = Disbursement::select(DB::raw('SUM(loan_amount) as total_sanction_amt'))
-                ->where('ckyc', $data->ckyc)
-                ->where('Business_Type','Agri')
-		->where('status', '!=','Duplicate')
-		->where('status', '!=','Rejected')
+                ->where('Business_Type', 'Agri')
+                ->where('status', '!=', 'Duplicate')
+                ->where('status', '!=', 'Rejected')
                 ->get()[0]->total_sanction_amt;
-
-            $total_sanction_amt_ckyc_msme = Disbursement::select(DB::raw('SUM(loan_amount) as total_sanction_amt'))
-                ->where('ckyc', $data->ckyc)
-                ->where('Business_Type','Msme')
-		->where('status', '!=','Duplicate')
-		->where('status', '!=','Rejected')
+            $total_sanction_amt_pan_msme = Disbursement::select(DB::raw('SUM(loan_amount) as total_sanction_amt'))
+                ->where('PAN', $data->PAN)
+                ->where('Business_Type', 'Msme')
+                ->where('status', '!=', 'Duplicate')
+                ->where('status', '!=', 'Rejected')
                 ->get()[0]->total_sanction_amt;
+        }
+        $total_sanction_amt_ckyc_agri = Disbursement::select(DB::raw('SUM(loan_amount) as total_sanction_amt'))
+            ->where('ckyc', $data->ckyc)
+            ->where('Business_Type', 'Agri')
+            ->where('status', '!=', 'Duplicate')
+            ->where('status', '!=', 'Rejected')
+            ->get()[0]->total_sanction_amt;
 
-	    $total_combined_pan = $total_sanction_amt_pan_agri + $total_sanction_amt_pan_msme ;
-	    $total_combined_ckyc = $total_sanction_amt_ckyc_agri + $total_sanction_amt_ckyc_msme; 
-	   
-	    if(strtolower($data->Business_Type) == 'agri'){
-		    if((float)$total_sanction_amt_pan_agri>500000.00 ||(float)$total_sanction_amt_ckyc_agri>500000.00){
+        $total_sanction_amt_ckyc_msme = Disbursement::select(DB::raw('SUM(loan_amount) as total_sanction_amt'))
+            ->where('ckyc', $data->ckyc)
+            ->where('Business_Type', 'Msme')
+            ->where('status', '!=', 'Duplicate')
+            ->where('status', '!=', 'Rejected')
+            ->get()[0]->total_sanction_amt;
 
-			    $arr['message'] = 'Sanction Amount Greater Than 5 lakhs';
-                     $arr['status'] = 'Rejected';
-                     return $arr;
-		    }
+        $total_combined_pan = $total_sanction_amt_pan_agri + $total_sanction_amt_pan_msme;
+        $total_combined_ckyc = $total_sanction_amt_ckyc_agri + $total_sanction_amt_ckyc_msme;
 
-		    if( (float)$total_combined_pan>2500000.00 || (float)$total_combined_ckyc>2500000.00){
-		    $arr['message'] = 'Combined Sanction Amount Greater Than 25 lakhs';
-                     $arr['status'] = 'Rejected';
-                     return $arr;
-		    }
-	    }
+        if (strtolower($data->Business_Type) == 'agri') {
+            if ((float)$total_sanction_amt_pan_agri > 500000.00 || (float)$total_sanction_amt_ckyc_agri > 500000.00) {
 
-	     if(strtolower($data->Business_Type) == 'msme'){
-                    if((float)$total_sanction_amt_pan_msme>2500000.00 ||(float)$total_sanction_amt_ckyc_msme>2500000.00){
-                     $arr['message'] = 'Sanction Amount Greater Than 25 lakhs';
-                     $arr['status'] = 'Rejected';
-                     return $arr;
-                    }
-
-                    if( (float)$total_combined_pan>2500000.00 || (float)$total_combined_ckyc>2500000.00){
-                    $arr['message'] = 'Combined Sanction Amount Greater Than 25 lakhs';
-                     $arr['status'] = 'Rejected';
-                     return $arr;
-                    }
+                $arr['message'] = 'Sanction Amount Greater Than 5 lakhs';
+                $arr['status'] = 'Rejected';
+                return $arr;
             }
 
-	 if ($data->dob) {
+            if ((float)$total_combined_pan > 2500000.00 || (float)$total_combined_ckyc > 2500000.00) {
+                $arr['message'] = 'Combined Sanction Amount Greater Than 25 lakhs';
+                $arr['status'] = 'Rejected';
+                return $arr;
+            }
+        }
+
+        if (strtolower($data->Business_Type) == 'msme') {
+            if ((float)$total_sanction_amt_pan_msme > 2500000.00 || (float)$total_sanction_amt_ckyc_msme > 2500000.00) {
+                $arr['message'] = 'Sanction Amount Greater Than 25 lakhs';
+                $arr['status'] = 'Rejected';
+                return $arr;
+            }
+
+            if ((float)$total_combined_pan > 2500000.00 || (float)$total_combined_ckyc > 2500000.00) {
+                $arr['message'] = 'Combined Sanction Amount Greater Than 25 lakhs';
+                $arr['status'] = 'Rejected';
+                return $arr;
+            }
+        }
+
+        if ($data->dob) {
             $age = Carbon::parse($data->dob)->age;
 
             if ($age < 18) {
@@ -618,24 +674,24 @@ private function apiVerify($data)
                 return $arr;
             }
         }
-	
-	 if($data->Gold_Purity != 18 &&  $data->Gold_Purity != 20 && $data->Gold_Purity != 22 && $data->Gold_Purity != 24){
-	 	$arr['message'] = 'Gold Purity should be 18/20/22/24 carat';
-                $arr['status'] = 'Rejected';
-                return $arr;
-	 }
 
-	 if($data->REMAINING_LOAN_TENURE<3){
-	 	$arr['message'] = 'Remaining tenure less than 3 month';
-                $arr['status'] = 'Rejected';
-                return $arr;
-	 }
+        if ($data->Gold_Purity != 18 &&  $data->Gold_Purity != 20 && $data->Gold_Purity != 22 && $data->Gold_Purity != 24) {
+            $arr['message'] = 'Gold Purity should be 18/20/22/24 carat';
+            $arr['status'] = 'Rejected';
+            return $arr;
+        }
 
-	if($data->REMAINING_LOAN_TENURE > $data->LOAN_TENURE){
-                $arr['message'] = 'Remaining tenure greater than Loan tenure';
-                $arr['status'] = 'Rejected';
-                return $arr;
-	}
+        if ($data->REMAINING_LOAN_TENURE < 3) {
+            $arr['message'] = 'Remaining tenure less than 3 month';
+            $arr['status'] = 'Rejected';
+            return $arr;
+        }
+
+        if ($data->REMAINING_LOAN_TENURE > $data->LOAN_TENURE) {
+            $arr['message'] = 'Remaining tenure greater than Loan tenure';
+            $arr['status'] = 'Rejected';
+            return $arr;
+        }
 
         if ($data->AGE) {
             $age = $data->AGE;
@@ -660,16 +716,16 @@ private function apiVerify($data)
                 $arr['status'] = 'Rejected';
                 return $arr;
             }
-	}
-	$formattedDate = Carbon::createFromFormat('d-m-Y',$data->SANCTION_DATE)->format('Y-m-d');
-	$gold_rate = GoldRate::where(DB::raw('Date(created_at)'),'=',Date($formattedDate))->get()[0]['22k_gold_rate'];
+        }
+        $formattedDate = Carbon::createFromFormat('d-m-Y', $data->SANCTION_DATE)->format('Y-m-d');
+        $gold_rate = GoldRate::where(DB::raw('Date(created_at)'), '=', Date($formattedDate))->get()[0]['22k_gold_rate'];
         //dd($gold_rate);
         $net_weight = $data->Net_Weight;
         $security_value = ($gold_rate * $net_weight);
         $sanction_amount = $data->loan_amount;
-        $ltv = round(($sanction_amount/$security_value)*100,2);
-        $data->update(['LTV'=>$ltv]);
-        if($ltv > 75){
+        $ltv = round(($sanction_amount / $security_value) * 100, 2);
+        $data->update(['LTV' => $ltv]);
+        if ($ltv > 75) {
             $arr['message'] = 'LTV more than 75%';
             $arr['status'] = 'Rejected';
             return $arr;
@@ -1082,43 +1138,44 @@ private function apiVerify($data)
         }
     }
 
-    public function calc_ltv(){
+    public function calc_ltv()
+    {
         $gold_rate = 6510;
         $net_weight = 54;
         $security_value = ($gold_rate * $net_weight);
         $sanction_amount = 257500;
-        $ltv = ($sanction_amount/$security_value)*100;
+        $ltv = ($sanction_amount / $security_value) * 100;
         dd($ltv);
     }
 
-   private function nameMatchPercent($name1, $name2) {
-    // Convert names to lowercase and split them into words
-    $name1Words = explode(" ", strtolower($name1));
-    $name2Words = explode(" ", strtolower($name2));
+    private function nameMatchPercent($name1, $name2)
+    {
+        // Convert names to lowercase and split them into words
+        $name1Words = explode(" ", strtolower($name1));
+        $name2Words = explode(" ", strtolower($name2));
 
-    // Sort the words to ignore the order
-    sort($name1Words);
-    sort($name2Words);
+        // Sort the words to ignore the order
+        sort($name1Words);
+        sort($name2Words);
 
-    // Initialize total similarity and match counts
-    $totalSimilarity = 0;
-    $wordCount = count($name1Words) + count($name2Words); // Total number of words in both names
+        // Initialize total similarity and match counts
+        $totalSimilarity = 0;
+        $wordCount = count($name1Words) + count($name2Words); // Total number of words in both names
 
-    // Compare each word from name2 against each word in name1
-    foreach ($name1Words as $word1) {
-        $bestMatch = 0;
-        foreach ($name2Words as $word2) {
-            similar_text($word1, $word2, $similarity);
-            if ($similarity > $bestMatch) {
-                $bestMatch = $similarity;
+        // Compare each word from name2 against each word in name1
+        foreach ($name1Words as $word1) {
+            $bestMatch = 0;
+            foreach ($name2Words as $word2) {
+                similar_text($word1, $word2, $similarity);
+                if ($similarity > $bestMatch) {
+                    $bestMatch = $similarity;
+                }
             }
+            $totalSimilarity += $bestMatch;
         }
-        $totalSimilarity += $bestMatch;
+
+        // Calculate the percentage similarity
+        $averageSimilarity = ($totalSimilarity / count($name1Words)); // Average similarity across name1
+        return round($averageSimilarity, 2);
     }
-
-    // Calculate the percentage similarity
-    $averageSimilarity = ($totalSimilarity / count($name1Words)); // Average similarity across name1
-    return round($averageSimilarity, 2);
-   }
 }
-

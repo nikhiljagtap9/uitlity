@@ -3,7 +3,7 @@
     <div class="card">
         <div class="card-header">
             <h3 class="card-title mb-0">
-                Upload Disbursement CSV File
+                Create Application (Bulk Upload CSV File)
             </h3>
         </div>
         <div class="card-body">
@@ -12,10 +12,10 @@
                     <div class="row brand-white-bg">
                         <form action="{{ route('disbursement.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
-                            <input type="hidden" name="partner_id" value="{{ env('PARTNER_ID', 'capri') }}">
+                            <input type="hidden" name="partner_id" value="{{ env('PARTNER_ID', 'capwise') }}">
                             <div class="form-group">
                                 <select name="product_id" id="product_id" class="form-control">
-                                    <option value="capri-gold-loan">Capri Gold LOAN</option>
+                                    <option value="capwise-business-loan">Capwise Business Loan</option>
                                 </select>
                             </div>
                             <div class="form-group">
