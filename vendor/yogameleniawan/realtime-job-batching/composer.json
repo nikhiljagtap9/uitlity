@@ -1,0 +1,17 @@
+{
+    "name": "yogameleniawan/realtime-job-batching",
+    "description": "Job Batching with Realtime Progress using Pusher for Laravel",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "YogaMeleniawan\\JobBatchingWithRealtimeProgress\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Yoga Meleniawan Pamungkas"
+        }
+    ],
+    "require": {}
+}
