@@ -29,7 +29,7 @@
             style="background-color:#0484CC !important;">
             <div class="container">
                 <a class="navbar-brand" href="{{ url('/') }}">
-                    <img src="https://capwisefin.com/wp-content/uploads/2022/12/Capwise-White-Logo.png"
+                    <img src="\assets\media\logos\logo.jpg"
                         style="height:50px" />
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"

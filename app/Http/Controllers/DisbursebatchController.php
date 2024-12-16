@@ -72,54 +72,37 @@ class DisbursebatchController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(Disbursebatch $disbursebatch, Request $request)
-    {
+    {   
         // Retrieve filter parameters
         $type = $request->input('type'); // 'pan' or 'ckyc'
         $lowerValue = $request->input('lower_value');
         $upperValue = $request->input('upper_value');
         $currentTab = $request->input('current_tab', 'tab2');
 
-        //dd($type,$lowerValue,$upperValue);
-
-
         $collection_count = Disbursement::where('batch_id', $disbursebatch->uuid)->count();
         $pending_count = Disbursement::where('batch_id', $disbursebatch->uuid)->where('status', 'Pending')->count();
         $collections = Disbursement::where('batch_id', $disbursebatch->uuid)->paginate(50);
         $approved_count = Disbursement::where('batch_id', $disbursebatch->uuid)->where('status', 'Approved')->count();
-        $bre_results = Disbursement::select(DB::raw('COUNT(*) as status_count,SUM(loan_amount) as loan_amount,SUM(sanction_amount) as sanction_amount,SUM(nbfc_sanction_amount) as nbfc_sanction_amount,SUM(bank_sanction_amount) as bank_sanction_amount,status'))
+        $bre_results = Disbursement::select(DB::raw('COUNT(*) as status_count,status'))
             ->groupBy('status')
             ->where('batch_id', $disbursebatch->uuid)
             ->get();
-        $results = Disbursement::select(DB::raw(' Business_Type, SUM(sanction_amount) as sanction_amount, SUM(nbfc_sanction_amount) as nbfc_sanction_amount, SUM(bank_sanction_amount) as bank_sanction_amount'))
+
+        $approvedList =  Disbursement::select(DB::raw('lapp_id,aadhar_number,udyam_aadhar,full_name,epic_number,driving_lic_number,date_of_birth,ckyc_number,pan,message,status,pan_match_score, ckyc_match_score,aadhar_match_score,driving_lic_match_score,voting_card_match_score,udyam_match_score'))
             ->where('batch_id', $disbursebatch->uuid)
-            ->whereIn('status', ['Done', 'Approved'])
-            ->groupBy('Business_Type')
+            ->whereIn('status', ['Done', 'Matched'])
             ->get();
 
-
-        $dataCounts = Disbursement::select(DB::raw('COUNT(*) as total_messages,message'))
-            ->groupBy('message')
-            ->get();
-
-        $approvedList =  Disbursement::select(DB::raw('	NBFC_Reference_Number, customer_name, loan_amount, sanction_amount, bank_sanction_amount,status'))
-            ->where('batch_id', $disbursebatch->uuid)
-            ->whereIn('status', ['Done', 'Approved'])
-            //->groupBy('Business_Type','loan_account_number')
-            ->get();
-
-        $rejectedList =  Disbursement::select(DB::raw('	 pan_match_score, ckyc_match_score,udyam_match_score, NBFC_Reference_Number, customer_name, loan_amount, sanction_amount, bank_sanction_amount,status,message'))
+        $rejectedList =  Disbursement::select(DB::raw('lapp_id,aadhar_number,udyam_aadhar,full_name,epic_number,driving_lic_number,date_of_birth,ckyc_number,pan,message,status,pan_match_score, ckyc_match_score,aadhar_match_score,driving_lic_match_score,voting_card_match_score,udyam_match_score'))
             ->where('batch_id', $disbursebatch->uuid)
             ->whereIn('status', ['Rejected', 'Pending']);
-        //->groupBy('Business_Type','loan_account_number')
-        //->get();
-
 
         if ($type === 'pan') {
             $rejectedList->whereBetween('pan_match_score', [$lowerValue, $upperValue]);
         } elseif ($type === 'ckyc') {
             $rejectedList->whereBetween('ckyc_match_score', [$lowerValue, $upperValue]);
-        } elseif ($type === 'udyam') {
-            $rejectedList->whereBetween('udyam_match_score', [$lowerValue, $upperValue]);
+        } elseif ($type === 'aadhar') {
+            $rejectedList->whereBetween('aadhar_match_score', [$lowerValue, $upperValue]);
         }
         $rejectedList = $rejectedList->get();
 
@@ -132,14 +115,11 @@ class DisbursebatchController extends Controller
             [
                 'batch' => $disbursebatch,
                 'collections' => $collections,
-                'results' => $results,
                 'collection_count' => $collection_count,
                 'pending_count' => $pending_count,
                 'approved_count' => $approved_count,
                 'bre_results' => $bre_results,
-                'dataCounts' =>  $dataCounts,
                 'approvedList' => $approvedList,
-                'rejectedList' => $rejectedList,
                 'rejectedList' => $rejectedList,
                 'currentTab' => $currentTab,
             ]

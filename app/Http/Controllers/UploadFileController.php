@@ -74,16 +74,15 @@ public function exportToCSV(Request $request)
     {
         // Define the expected column names
         $expectedColumns = [
-            'Sr no', 'Nbfc_reference_number', 'Cgcl_customer_number', 'Cgcl_account_number', 'Disbursment_detail',
-            'Customer_name', 'First_name', 'Middle_name', 'Last_name', 'Add1', 'Add2', 'City', 'State', 'Zipcode',
-            'Mobile_no', 'Pan', 'Dob', 'Age', 'Gender', 'Mother_name', 'Resi-status', 'Nationality-code', 'Title',
-            'Sec-id-type', 'Aadhar_no', 'Ckyc_number', 'Ckyc date', 'Sanction_limit', 'Sanction_date', 'POS',
-            'Insurance_financed', 'Pos_including_insurance', 'Loan_tenure', 'Remaining_loan_tenure', 'Total_weight',
-            'Name_valuer', 'Role_valuer', 'Gross_weight', 'Total_weight_valuer', 'Gold_value', 'Net_weight', 'Gold_rate',
-            'Market_rate', 'Total_value', 'LTV', 'Bank_sanction_amount', 'Repayment_type', 'Date_disbursement', 'Maturity_date',
-            'Account_status', 'Gold_purity', 'Disbursal_mode', 'Collateral_description', 'Business_type', 'Valuation_date',
-            'Realizable_security_value', 'Repay_day', 'Emi_start_date', 'Moratorium', 'Assets_id', 'Security_interest_id',
-            'Cersai_date', 'CIC', 'CGCL_ROI', 'Udyam_no'
+            'Sr no',
+            'pan',
+            'full_name',
+            'epic_number',
+            'driving_lic_number',
+            'date_of_birth',
+            'aadhar_number',
+            'udyam_aadhar',
+            'ckyc_number'
         ];
 
         // Store the uploaded file
@@ -123,22 +122,13 @@ public function exportToCSV(Request $request)
             $errorCount = 0; // Initialize error count for the current row
 
             // Define columns for validation
-            $dateColumns = ['Dob', 'Ckyc date', 'Sanction_date', 'Date_disbursement', 'Maturity_date', 'Emi_start_date', 'Valuation_date'];
-            $panColumn = 'Pan';
-            $ckycColumn = 'Ckyc_number';
-            $amountColumns = ['Bank_sanction_amount', 'Sanction_limit'];
+            $dateColumns = ['date_of_birth'];
+            $panColumn = 'pan';
+            $ckycColumn = 'ckyc_number';
             $requiredColumns = [
-                'Nbfc_reference_number', 'Cgcl_customer_number', 'Cgcl_account_number', 'Disbursment_detail',
-                'Customer_name', 'First_name', 'Add1', 'City', 'State', 'Zipcode',
-                'Mobile_no', 'Pan', 'Age', 'Gender', 'Nationality-code', 'Aadhar_no', 'Ckyc_number', 'Sanction_limit', 'POS',
-                'Pos_including_insurance', 'Loan_tenure', 'Total_weight',
-                'Name_valuer', 'Role_valuer', 'Gross_weight', 'Total_weight_valuer', 'Gold_value', 'Net_weight', 'Gold_rate',
-                'Market_rate', 'Total_value', 'LTV', 'Bank_sanction_amount', 'Repayment_type', 'Date_disbursement',
-                'Account_status', 'Gold_purity', 'Disbursal_mode', 'Collateral_description', 'Business_type',
-                'Realizable_security_value', 'Repay_day', 'CGCL_ROI'
+                'pan','full_name','epic_number','driving_lic_number','date_of_birth','aadhar_number','udyam_aadhar','ckyc_number'
             ];
-            $udyamColumn = 'Udyam_no';
-            $businessTypeColumn = 'Business_type';
+            $aadharColumn = 'aadhar_number';
             // Process validation for each column in the row
 
 
@@ -169,33 +159,10 @@ public function exportToCSV(Request $request)
                     }
                 }
 
-                // Validate amount columns
-                if (in_array($columnName, $amountColumns)) {
-                    if (!$this->validateAmount($value)) {
-                        $errorMessage .= "Invalid numeric value in '$columnName' column, ";
-                    }
-                }
-
                 // Validate required fields
                 if (in_array($columnName, $requiredColumns)) {
                     if (!$this->validateRequiredField($value)) {
                         $errorMessage .= "Required field in '$columnName' column is empty, ";
-                    }
-                }
-
-                // Validate Udyam number for MSME
-                if ($columnName === $businessTypeColumn) {
-                    $businessTypeValue = strtolower($row[$index]);
-                    $udyamValue = $row[array_search($udyamColumn, $fileHeader)];
-
-                    if ($businessTypeValue === 'msme') {
-                        if (!$this->validateUdyamNumber($udyamValue)) {
-                            $errorMessage .= "Invalid Udyam number for MSME in Udyam_no column, "; // Append error message
-                        }
-                    }
-
-                    if ($businessTypeValue === 'agri' && !empty($udyamValue)) {
-                        $row[array_search($udyamColumn, $fileHeader)] = ''; // Clear Udyam for Agri
                     }
                 }
 
@@ -218,8 +185,9 @@ public function exportToCSV(Request $request)
 
             // Add prefixes for the columns in one pass
             $row = $this->addPrefixToColumns($row, $fileHeader, [
-                'Mobile_no' => 'mo',
-                'Ckyc_number' => 'ckyc'
+                'mobile_no' => 'mo',
+                'ckyc_number' => 'ckyc',
+                'aadhar_number' => 'aadhar'
             ]);
 
             // Add the row to CSV data
@@ -247,224 +215,6 @@ public function exportToCSV(Request $request)
         }
 
     }
-
-
-
-/*
-    public function exportToCSV(Request $request)
-    {
-        // Define the expected column names
-        $expectedColumns = [
-            'Sr no', 'Nbfc_reference_number', 'Cgcl_customer_number', 'Cgcl_account_number', 'Disbursment_detail',
-            'Customer_name', 'First_name', 'Middle_name', 'Last_name', 'Add1', 'Add2', 'City', 'State', 'Zipcode',
-            'Mobile_no', 'Pan', 'Dob', 'Age', 'Gender', 'Mother_name', 'Resi-status', 'Nationality-code', 'Title',
-            'Sec-id-type', 'Aadhar_no', 'Ckyc_number', 'Ckyc date', 'Sanction_limit', 'Sanction_date', 'POS',
-            'Insurance_financed', 'Pos_including_insurance', 'Loan_tenure', 'Remaining_loan_tenure', 'Total_weight',
-            'Name_valuer', 'Role_valuer', 'Gross_weight', 'Total_weight_valuer', 'Gold_value', 'Net_weight', 'Gold_rate',
-            'Market_rate', 'Total_value', 'LTV', 'Bank_sanction_amount', 'Repayment_type', 'Date_disbursement', 'Maturity_date',
-            'Account_status', 'Gold_purity', 'Disbursal_mode', 'Collateral_description', 'Business_type', 'Valuation_date',
-            'Realizable_security_value', 'Repay_day', 'Emi_start_date', 'Moratorium', 'Assets_id', 'Security_interest_id',
-            'Cersai_date', 'CIC', 'CGCL_ROI', 'Udyam_no'
-        ];
-
-        // Store the uploaded file
-        $path = $request->file('upload')->store('sv_files');
-        $fileName = $request->file('upload')->getClientOriginalName();
-        $file = Storage::path($path);
-
-        // Load the Excel data
-        $chunkImport = new ImportsChunkImport();
-        Excel::import($chunkImport, $file);
-
-        // Retrieve the header and rows after import
-        $fileHeader = $chunkImport->getHeader();
-        $rows = $chunkImport->getRowsData();
-        $csvData = '';
-        $overallErrorExists = false; // Flag to track if any errors exist
-        // Check column count
-        $columnCountCheck = $this->checkColumnCount($expectedColumns, $fileHeader);
-        if ($columnCountCheck !== true) {
-            return back()->with('error1', $columnCountCheck);
-        }
-
-        // Call the method to check column matching
-        $columnCheckResult = $this->checkColumns($expectedColumns, $fileHeader);
-        if ($columnCheckResult !== true) {
-            return back()->with('error1', $columnCheckResult);
-        }
-
-        // Initialize CSV data with the header only once
-      //  $csvData = $this->escapeCsvRow($fileHeader) . "\n";
-
-        foreach ($rows as $rowIndex => $row) {
-            if (is_array($row) && empty(array_filter($row))) {
-                continue; // Skip empty rows
-            }
-            $errorMessage = ''; // Initialize error message for the current row
-            $errorCount = 0; // Initialize error count for the current row
-
-            // Define columns for validation
-            $dateColumns = ['Dob', 'Ckyc date', 'Sanction_date', 'Date_disbursement', 'Maturity_date', 'Emi_start_date', 'Valuation_date'];
-            $panColumn = 'Pan';
-            $ckycColumn = 'Ckyc_number';
-            $amountColumns = ['Bank_sanction_amount', 'Sanction_limit'];
-            $requiredColumns = [
-                'Nbfc_reference_number', 'Cgcl_customer_number', 'Cgcl_account_number', 'Disbursment_detail',
-                'Customer_name', 'First_name', 'Add1', 'City', 'State', 'Zipcode',
-                'Mobile_no', 'Pan', 'Age', 'Gender', 'Nationality-code', 'Aadhar_no', 'Ckyc_number', 'Sanction_limit', 'POS',
-                'Pos_including_insurance', 'Loan_tenure', 'Total_weight',
-                'Name_valuer', 'Role_valuer', 'Gross_weight', 'Total_weight_valuer', 'Gold_value', 'Net_weight', 'Gold_rate',
-                'Market_rate', 'Total_value', 'LTV', 'Bank_sanction_amount', 'Repayment_type', 'Date_disbursement',
-                'Account_status', 'Gold_purity', 'Disbursal_mode', 'Collateral_description', 'Business_type',
-                'Realizable_security_value', 'Repay_day', 'CGCL_ROI'
-            ];
-            $udyamColumn = 'Udyam_no';
-            $businessTypeColumn = 'Business_type';
-            // Process validation for each column in the row
-            foreach ($fileHeader as $index => $columnName) {
-                if (in_array($columnName, $dateColumns)) {
-                    $dateValue = $row[$index];
-
-                    $formattedDate = $this->validateDate($dateValue, 'd-m-Y');
-                    if ($formattedDate === false) {
-                        $errorMessage .= "Invalid date format in '$columnName'; "; // Append error message
-                    } else {
-
-                        $row[$index] = $formattedDate;// Update row with formatted date
-                    }
-
-                }
-
-                // Validate PAN
-                if ($columnName === $panColumn) {
-                    $panValue = $row[$index];
-                    //dd($panValue);
-                    if (!$this->validatePAN($panValue)) {
-                        $errorMessage .= "Invalid PAN format in '$columnName' column; "; // Append error message
-                    }
-                }
-
-                // Validate CKYC number
-                if ($columnName === $ckycColumn) {
-                    $ckycValue = $row[$index];
-                    if (!$this->validateCkycNumber($ckycValue)) {
-                        $errorMessage .= "CKYC number must be exactly 14 characters in '$columnName' column; "; // Append error message
-                    }
-                }
-
-                // Validate amount columns
-                if (in_array($columnName, $amountColumns)) {
-                    $amountValue = $row[$index];
-                    if (!$this->validateAmount($amountValue)) {
-                        $errorMessage .= "Invalid numeric value in '$columnName' column; "; // Append error message
-                    }
-                }
-
-                // Validate required fields
-                if (in_array($columnName, $requiredColumns)) {
-                    $requiredValue = $row[$index];
-                    if (!$this->validateRequiredField($requiredValue)) {
-                        $errorMessage .= "Required field in '$columnName' column is empty; "; // Append error message
-                    }
-                }
-
-                // Validate business type and Udyam number
-                if ($columnName === $businessTypeColumn) {
-                    $businessTypeValue = strtolower($row[$index]);
-                    $udyamValue = $row[array_search($udyamColumn, $fileHeader)];
-
-                    if ($businessTypeValue === 'msme') {
-                        if (!$this->validateUdyamNumber($udyamValue)) {
-                            $errorMessage .= "Invalid Udyam number for MSME in Udyam_no column; "; // Append error message
-                        }
-                    }
-
-                    if ($businessTypeValue === 'agri' && !empty($udyamValue)) {
-                        $row[array_search($udyamColumn, $fileHeader)] = ''; // Clear Udyam for Agri
-                    }
-                }
-            }
-
-            // If errors exist, append the error message and set the overall error flag
-            if (!empty($errorMessage)) {
-                $overallErrorExists = true; // Set the overall error flag to true
-
-
-                // Remove trailing semicolon and space
-                $errorMessage = rtrim($errorMessage); // Trim trailing spaces
-                if ($errorCount > 1) {
-                    $errorMessage = rtrim($errorMessage, '; ') . ';'; // Change last semicolon to full stop for multiple errors
-                } else {
-                    $errorMessage = rtrim($errorMessage, '; ') . '.'; // Keep it as full stop for single error
-                }
-
-
-                $row[] = $errorMessage; // Append error message to the row
-            }
-            $row = $this->addPrefixToColumns($row, $fileHeader, ['Mobile_no' => 'mo', 'Ckyc_number' => 'ckyc']);
-
-            // Add the row to CSV data
-            $csvData .= $this->escapeCsvRow($row) . "\n"; // Add processed row to CSV data
-
-        }
-
-        if (!$overallErrorExists) {
-            // Rebuild the CSV data with prefixes added
-            $csvDataWithPrefixes = '';
-
-            foreach ($rows as $rowIndex => $row) {
-                foreach ($fileHeader as $index => $columnName) {
-                if (empty(array_filter($row))) {
-                    continue; // Skip empty rows
-                }
-                if (in_array($columnName, $dateColumns)) {
-                    $dateValue = $row[$index];
-
-                    $formattedDate = $this->validateDate($dateValue, 'd-m-Y');
-                    $row[$index] = $formattedDate;// Update row with formatted date
-
-                }
-            }
-            $row = $this->addPrefixToColumns($row, $fileHeader, ['Mobile_no' => 'mo', 'Ckyc_number' => 'ckyc']);
-
-                // Skip the header row
-                if ($rowIndex === 0) {
-                    $csvDataWithPrefixes .= $this->escapeCsvRow($row) . "\n"; // Add header to prefixed CSV data
-                    continue;
-                }
-
-                $row[] = ''; // Ensure Error Message column is empty for non-error rows
-                $csvDataWithPrefixes .= $this->escapeCsvRow($row) . "\n"; // Add row with prefixes
-        }
-
-            // Set final CSV data to be the one with prefixes
-            $csvData = $csvDataWithPrefixes;
-            $csvData = $this->escapeCsvRow($fileHeader) . "\n" . $csvData;
-        } else {
-
-            // If there are errors, create a new header
-            $header = $fileHeader; // Start with the original header
-            $header[] = "Error Message"; // Add "Error Message" to the end of the header
-
-            // Rebuild CSV content with error messages
-            $csvData = $this->escapeCsvRow($header) . "\n" . $csvData; // Ensure Error Message is at the end of the header
-        }
-
-
-
-        // Store the CSV file
-        $csvFileName = pathinfo($fileName, PATHINFO_FILENAME) . '.csv';
-        Storage::disk('local')->put($csvFileName, $csvData);
-
-        if ($overallErrorExists) {
-            session()->put('csvFileName', $csvFileName);
-            return back()->with('error','Issues were detected in the uploaded file.<br><strong>Please Download Error File to check for details.</strong>')->with('showDownloadButton', true);
-        } else {
-            return response()->download(storage_path('app/' . $csvFileName))->deleteFileAfterSend(true);
-        }
-    }
- */
-
 
     private function validateDate($date, $format = 'd-m-Y')
     {
@@ -618,70 +368,13 @@ public function exportToCSV(Request $request)
         // Define the expected column names
         $expectedColumns = [
             'Sr no',
-            'Nbfc_reference_number',
-            'Cgcl_customer_number',
-            'Cgcl_account_number',
-            'Disbursment_detail',
-            'Customer_name',
-            'First_name',
-            'Middle_name',
-            'Last_name',
-            'Add1',
-            'Add2',
-            'City',
-            'State',
-            'Zipcode',
-            'Mobile_no',
-            'Pan',
-            'Dob',
-            'Age',
-            'Gender',
-            'Mother_name',
-            'Resi-status',
-            'Nationality-code',
-            'Title',
-            'Sec-id-type',
-            'Aadhar_no',
-            'Ckyc_number',
-            'Ckyc date',
-            'Sanction_limit',
-            'Sanction_date',
-            'POS',
-            'Insurance_financed',
-            'Pos_including_insurance',
-            'Loan_tenure',
-            'Remaining_loan_tenure',
-            'Total_weight',
-            'Name_valuer',
-            'Role_valuer',
-            'Gross_weight',
-            'Total_weight_valuer',
-            'Gold_value',
-            'Net_weight',
-            'Gold_rate',
-            'Market_rate',
-            'Total_value',
-            'LTV',
-            'Bank_sanction_amount',
-            'Repayment_type',
-            'Date_disbursement',
-            'Maturity_date',
-            'Account_status',
-            'Gold_purity',
-            'Disbursal_mode',
-            'Collateral_description',
-            'Business_type',
-            'Valuation_date',
-            'Realizable_security_value',
-            'Repay_day',
-            'Emi_start_date',
-            'Moratorium',
-            'Assets_id',
-            'Security_interest_id',
-            'Cersai_date',
-            'CIC',
-            'CGCL_ROI',
-            'Udyam_no'
+            'pan',
+            'full_name',
+            'epic_number',
+            'driving_lic_number',
+            'date_of_birth',
+            'aadhar_number',
+            'ckyc_number'
         ];
 
         // Open a memory stream to hold the CSV data
@@ -693,70 +386,12 @@ public function exportToCSV(Request $request)
         // Add a sample record (you can adjust these values as needed)
         $sampleRecord = [
             1,
-            'L30100009731111',
-            '1473004',
-            'L30100009730617',
-            'FULL',
-            'RAJENDRA GAUR',
-            'RAJENDRA',
-            'Manoj',
-            'GAUR',
-            'Ward.no.3 Pratap colony chhabra',
-            'Baran Chhabra ward no.3 pratap colony Chhabra',
-            'Mumbai',
-            'Maharashtra',
-            '400001',
-            '9876543210',
-            'ABCDE1234F',
-            '10-10-2024',
-            '32',
-            'Male',
-            'MRS GAUR',
-            '',
-            'IN',
-            'Mr.',
-            'Aadhar',
-            'XXXXXXXX1234',
-            'CKYC12345678912345',
-            '10-10-2024',
-            '500000',
-            '10-10-2024',
-            '450000',
-            '0',
-            '200000',
-            '12',
-            '10',
-            '79.6',
-            'Neetu',
-            'Asistance Branch Manager',
-            '59.4',
-            '79.6',
-            '356994',
-            '54',
-            '4925',
-            '6611',
-            '356994',
-            '0.560233505',
-            '1600000',
-            'Half Yearly',
-            '10-10-2024',
-            '10-10-2024',
-            'Regular',
-            '22',
-            'Online Mode',
-            '54.0(BANGLES)',
-            'agri',
-            '10-10-2024',
-            '400000',
-            '1',
-            '10-10-2024',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '16.5',
-            'UDYAM-MH-12-1234567'
+            'JDXPS7881C',
+            'First_name Middle_name Last_name',
+            'ITR0046391',
+            'HR7220180000466',
+            'Enter date of birth in DD-MM-YYYY format e.g 13-08-1994',
+            '265385644663'
         ];
 
         // Add the sample record to the CSV

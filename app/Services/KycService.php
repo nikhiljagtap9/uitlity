@@ -50,7 +50,7 @@ class KycService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response instead of outputting
         curl_setopt($ch, CURLOPT_POST, true); // This is a POST request
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data); // Set the POST data
-        curl_setopt($ch, CURLOPT_PROXY, "10.128.106.4:8080");
+    //    curl_setopt($ch, CURLOPT_PROXY, "10.128.106.4:8080");
 	curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
 	curl_setopt($ch,CURLOPT_VERBOSE,true);
         // Set headers
@@ -84,9 +84,10 @@ class KycService
             'data' => $arr
         );
         $request_json = json_encode($request);
+
         try {
 	    $res = $this->post('/panDataFetch', json_encode($arr));
-            dd($res);
+         //   dd($res);
 	    if ($res['responseCode'] == 'SRC001') {
                 $pan_details = $res['data'];
                 //dd($pan_details);
@@ -107,7 +108,7 @@ class KycService
             $api_status = 'F';
             $process_status = 'failed';
         }
-        //$this->ProcessMetaService->add($data, $request_json, json_encode($res), $api_status, $process_status,'PanVerification');
+        $this->ProcessMetaService->add($data, $request_json, json_encode($res), $api_status, $process_status,'PanVerification');
         if ($api_status == 'S') {
             return $pan_details;
         } else {
@@ -116,9 +117,6 @@ class KycService
     }
     public function udyamVerification($udyam_aadhar, $data)
     {
-        /**
-         * PAN Verification using scoreme API
-         */
         $arr = array(
             'registrationnumber' => $udyam_aadhar
         );
@@ -127,39 +125,163 @@ class KycService
             'endpoint' => $this->baseUrl . $endpoint,
             'data' => $arr
         );
-       // dd($udyam_aadhar );
         $request_json = json_encode($request);
-	try {
-            $response = $this->post('/udyamRegistration', json_encode($arr));
-	  // dd($response['responseCode']);
-	    if ($response['responseCode'] == 'SRC001') {
-                $udyam_details = $response['data'];
-                if ($udyam_aadhar == $udyam_details['udyamRegistrationNumber']) {
-                    //return $pan_details;
-                    $api_status = 'S';
-                    $process_status = 'completed';
+        try {
+                $response = $this->post('/udyamRegistration', json_encode($arr));
+            if ($response['responseCode'] == 'SRC001') {
+                    $udyam_details = $response['data'];
+                    if ($udyam_aadhar == $udyam_details['udyamRegistrationNumber']) {
+                        //return $pan_details;
+                        $api_status = 'S';
+                        $process_status = 'completed';
+                    } else {
+                        $api_status = 'F';
+                        $process_status = 'failed';
+                    }
                 } else {
                     $api_status = 'F';
                     $process_status = 'failed';
                 }
-            } else {
+            } catch (\Exception $e) {
+                $response = response()->json(['error' => $e->getMessage()], 500);
                 $api_status = 'F';
                 $process_status = 'failed';
-            }
-        } catch (\Exception $e) {
-            $response = response()->json(['error' => $e->getMessage()], 500);
-            $api_status = 'F';
-            $process_status = 'failed';
-	}
-
-     $this->ProcessMetaService->add($data, $request_json, json_encode($response), $api_status, $process_status,'udyamVerification');
-        if ($api_status == 'S') {
-            return $udyam_details;
-        } else {
-            return false;
         }
 
+        $this->ProcessMetaService->add($data, $request_json, json_encode($response), $api_status, $process_status,'udyamVerification');
+            if ($api_status == 'S') {
+                return $udyam_details;
+            } else {
+                return false;
+            }
+
     }
+
+    public function aadharVerification($aadhar, $data)
+    {
+        $arr = array(
+            'aadhaarNumber' => $aadhar
+        );
+        $endpoint = '/aadhaarVerifier';
+        $request = array(
+            'endpoint' => $this->baseUrl . $endpoint,
+            'data' => $arr
+        );
+        $request_json = json_encode($request);
+        try {
+            $response = $this->post('/aadhaarVerifier', json_encode($arr));
+            if ($response['responseCode'] == 'SRC001') {
+                    $details = $response['data'];
+                    if ($aadhar == $details['aadhaarNumber']) {
+                        $api_status = 'S';
+                        $process_status = 'completed';
+                    } else {
+                        $api_status = 'F';
+                        $process_status = 'failed';
+                    }
+                } else {
+                    $api_status = 'F';
+                    $process_status = 'failed';
+                }
+            } catch (\Exception $e) {
+                $response = response()->json(['error' => $e->getMessage()], 500);
+                $api_status = 'F';
+                $process_status = 'failed';
+        }
+
+        $this->ProcessMetaService->add($data, $request_json, json_encode($response), $api_status, $process_status,'aadharVerification');
+            if ($api_status == 'S') {
+                return $details;
+            } else {
+                return false;
+            }
+
+    }
+
+    public function drivingLicenceVerification($driving_lic_number, $data)
+    {
+        $formattedDate = Carbon::createFromFormat('d-m-Y', $data->date_of_birth)->format('d-M-Y');
+        $arr = array(
+            "dateOfBirth" =>  $formattedDate,
+            "drivingLicenceNumber" => $data->driving_lic_number
+        );
+        $endpoint = '/drivingLicenceDataFetch';
+        $request = array(
+            'endpoint' => $this->baseUrl . $endpoint,
+            'data' => $arr
+        );
+        $request_json = json_encode($request);
+        try {
+            $response = $this->post('/drivingLicenceDataFetch', json_encode($arr));
+            if ($response['responseCode'] == 'SRC001') {
+                    $details = $response['data'];
+                    if ($driving_lic_number == $details['licenceNumber']) {
+                        $api_status = 'S';
+                        $process_status = 'completed';
+                    } else {
+                        $api_status = 'F';
+                        $process_status = 'failed';
+                    }
+                } else {
+                    $api_status = 'F';
+                    $process_status = 'failed';
+                }
+            } catch (\Exception $e) {
+                $response = response()->json(['error' => $e->getMessage()], 500);
+                $api_status = 'F';
+                $process_status = 'failed';
+        }
+
+        $this->ProcessMetaService->add($data, $request_json, json_encode($response), $api_status, $process_status,'drivingLicenceVerification');
+            if ($api_status == 'S') {
+                return $details;
+            } else {
+                return false;
+            }
+
+    }
+
+    public function voterCardVerification($voter_ard, $data)
+    {
+        $arr = array(
+            "epicNumber" => $voter_ard
+        );
+        $endpoint = '/voterCard';
+        $request = array(
+            'endpoint' => $this->baseUrl . $endpoint,
+            'data' => $arr
+        );
+        $request_json = json_encode($request);
+        try {
+            $response = $this->post('/voterCard', json_encode($arr));
+            if ($response['responseCode'] == 'SRC001') {
+                    $details = $response['data'];
+                    if ($voter_ard == $details['epicNumber']) {
+                        $api_status = 'S';
+                        $process_status = 'completed';
+                    } else {
+                        $api_status = 'F';
+                        $process_status = 'failed';
+                    }
+                } else {
+                    $api_status = 'F';
+                    $process_status = 'failed';
+                }
+            } catch (\Exception $e) {
+                $response = response()->json(['error' => $e->getMessage()], 500);
+                $api_status = 'F';
+                $process_status = 'failed';
+        }
+
+        $this->ProcessMetaService->add($data, $request_json, json_encode($response), $api_status, $process_status,'voterCardVerification');
+            if ($api_status == 'S') {
+                return $details;
+            } else {
+                return false;
+            }
+
+    }
+
     protected function post1($endpoint, $data = [])
     {
         //dd($data);

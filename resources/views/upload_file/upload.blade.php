@@ -81,20 +81,55 @@
         <div class="card-body">
             <form action="{{ route('upload_excel') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
                 @csrf
-                <div class="form-group">
-                    <label for="upload">Upload Excel File</label>
-                    <input type="file" name="upload" id="upload" class="form-control" required>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="fs-6 mb-2">
+                            <span class="required">Upload Excel File</span>
+                        </label>
+                        <div class="uppy-wrapper uppy">
+                            <div class="uppy-Root uppy-FileInput-container">
+                                <input class="uppy-FileInput-input uppy-input-control" type="file" name="upload" id="kt_uppy_5_input_control">
+                                <label class="uppy-input-label btn btn-light-primary btn-bold" for="kt_uppy_5_input_control">
+                                Choose Files</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="col">
+                            <div class="card card-flush py-2">
+                               
+                                <!--begin::Card body-->
+                                <div class="card-body pt-0">
+                                    <!--begin::Input group-->
+                                    <div class="fv-row mb-2">
+                                        <!--begin::Dropzone-->
+                                        <a href="{{ url('/download-sample-excel') }}">
+                                            <div class="dropzone" id="kt_ecommerce_add_product_media">
+                                                <!--begin::Message-->
+                                                <div class="dz-message needsclick">
+                                                    <div class="ms-4">
+                                                        <h3 class="fs-5 fw-bolder text-gray-900 mb-1">Download Sample File</h3>
+                                                        <span class="fs-7 fw-bold text-gray-400">Acceptable formats: XLSX.</span>
+                                                    </div>
+                                                    <i class="bi bi-file-earmark-arrow-up text-primary fs-3x"></i>
+                                                    <!--end::Info-->
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <!--end::Dropzone-->
+                                    </div>         
+                                </div>    
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!-- Row for both buttons: Upload and Download Sample File -->
                 <div class="form-group row">
                     <div class="col-auto">
                         <input type="submit" name="upload" class="btn btn-primary btn-block" value="Upload">
                     </div>
-                    <div class="ml-auto">
-                        <a href="{{ route('download.sample') }}" class="btn btn-primary custom-btn">Download Sample File</a>
-                    </div>
                 </div>
-
             </form>
 
             @if ($errors->any())

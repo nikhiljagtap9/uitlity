@@ -14,7 +14,7 @@ class Disbursebatch extends Model
 
     // Automatically generate UUID when creating a new item
     public static function boot()
-    {
+    {  
         parent::boot();
         /*
         static::creating(function ($model) {
